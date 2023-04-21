@@ -6,10 +6,10 @@ from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 
+from api.v1 import films
 from core import config
 from core.logger import LOGGING
-from db import elastic
-from db import redis
+from db import elastic, redis
 
 
 app = FastAPI(
@@ -34,6 +34,11 @@ async def shutdown():
     # Отключаемся от баз при выключении сервера
     await redis.redis.close()
     await elastic.es.close()
+
+
+# Подключаем роутер к серверу, указав префикс /v1/films
+# Теги указываем для удобства навигации по документации
+app.include_router(films.router, prefix='/api/v1/films', tags=['films'])
 
 
 if __name__ == '__main__':
