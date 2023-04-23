@@ -3,6 +3,7 @@ elasticsearch[async]==8.6.2
 fastapi==0.95.1
 hiredis==2.2.2
 orjson==3.8.10
+psycopg2-binary==2.9.6
 pydantic==1.10.7
 redis==4.5.4
 uvicorn==0.21.1
