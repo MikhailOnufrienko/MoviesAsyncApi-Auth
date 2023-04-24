@@ -12,7 +12,7 @@ class PostgresExtractor:
         self.connection = connection
         self.cursor = self.connection.cursor()
         self.cursor.execute('SET search_path TO content;')
-        self.cursor.arraysize = block_size
+        self.cursor.arraysize = 10
     
     def extract_data(self,
             # start_time: datetime,
@@ -47,10 +47,13 @@ class PostgresExtractor:
 
             for row in data:
                 try:
+                    PersonInfo(**row)
                     # model_data.append(PersonInfo(**row))
-                    model_data.append(row)
+                    # model_data.append(row)
                 except pydantic.ValidationError as exc:
                     pass # logging in future
+
+                model_data.append(dict(row))
             
                 # excluded_ids.append(row['id'])
             

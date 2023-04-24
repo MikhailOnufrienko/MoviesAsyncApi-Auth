@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from pg_extractor import PostgresExtractor
 import psycopg2
 from psycopg2.extras import DictCursor
+from es_loader import ESLoader
 
 load_dotenv()
 
@@ -23,10 +24,14 @@ dsl = {
 }
 
 
-def run(extractor: PostgresExtractor):
+def run(extractor: PostgresExtractor, loader: ESLoader):
     """Extracting data from postgres and loading to ES."""
 
     for data in extractor.extract_data():
+
+        loader.load(data, INDEX_NAME)
+
+        break
 
         try:
             print(len(data))
@@ -37,13 +42,15 @@ def run(extractor: PostgresExtractor):
 
 if __name__ == '__main__':
 
-    print(dsl)
+    if not es.indices.exists(index=INDEX_NAME):
+        create_es_index(es, INDEX_NAME)
     
     with psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn:
 
         extractor = PostgresExtractor(pg_conn, BLOCK_SIZE)
+        loader = ESLoader(es)
 
-        run(extractor)
+        run(extractor, loader)
 
     # if not es.indices.exists(index=INDEX_NAME):
     #     create_es_index(es, INDEX_NAME)
