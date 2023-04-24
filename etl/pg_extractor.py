@@ -3,7 +3,7 @@ from datetime import datetime
 import pydantic
 from psycopg2.extensions import connection as pg_connection
 
-from utils.models import PersonInfo
+from utils.pydantic_schemas import PersonInfo
 
 
 class PostgresExtractor:
@@ -14,16 +14,15 @@ class PostgresExtractor:
         self.cursor.execute('SET search_path TO content;')
         self.cursor.arraysize = block_size
     
-    def extract_data(
-            self, start_time: datetime,
-            extract_time: datetime, excluded_ids: list
+    def extract_data(self,
+            # start_time: datetime,
+            # extract_time: datetime, excluded_ids: list
     ) -> list:
         """Extracting person data from PostgreSQL."""
 
         query = f"""
             SELECT p.id, p.full_name
-            FROM persons p
-            WHERE p.modified > '{extract_time}'
+            FROM person p
         """
 
         # if excluded_ids:
@@ -48,7 +47,8 @@ class PostgresExtractor:
 
             for row in data:
                 try:
-                    model_data.append(PersonInfo(**row))
+                    # model_data.append(PersonInfo(**row))
+                    model_data.append(row)
                 except pydantic.ValidationError as exc:
                     pass # logging in future
             

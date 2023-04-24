@@ -8,7 +8,7 @@ INDEX_SETTINGS = {
     'mappings': {
         'properties': {
             'id': {
-                'type': 'keywork'
+                'type': 'keyword'
             },
             'title':{
                 'type': 'text',
