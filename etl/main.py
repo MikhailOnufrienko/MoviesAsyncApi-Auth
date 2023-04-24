@@ -31,12 +31,12 @@ def run(extractor: PostgresExtractor, loader: ESLoader):
 
         loader.load(data, INDEX_NAME)
 
-        break
+        # break
 
-        try:
-            print(len(data))
-        except Exception:
-            print('error')
+        # try:
+        #     print(len(data))
+        # except Exception:
+        #     print('error')
 
 
 

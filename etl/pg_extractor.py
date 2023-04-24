@@ -12,7 +12,7 @@ class PostgresExtractor:
         self.connection = connection
         self.cursor = self.connection.cursor()
         self.cursor.execute('SET search_path TO content;')
-        self.cursor.arraysize = 10
+        self.cursor.arraysize = block_size
     
     def extract_data(self,
             # start_time: datetime,
