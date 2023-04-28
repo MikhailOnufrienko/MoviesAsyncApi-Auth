@@ -11,6 +11,7 @@ import pytz
 import datetime
 import redis
 from utils.logging_settings import setup_logging
+from utils.state import STATE_CLS
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ tz = pytz.timezone('Europe/Moscow')
 
 BLOCK_SIZE = 500
 
-INDEX_NAME = 'person_index'
+PERSON_INDEX_NAME = 'person_index'
 
 dsl = {
     'dbname': os.getenv('POSTGRES_DB'),
@@ -44,16 +45,18 @@ def run(extractor: PostgresExtractor, loader: ESLoader):
         logging.info('Data block fetched from PostgreSQL.')
 
         try:
-            loader.load(data, INDEX_NAME)
-            logging.info('Data loaded to ElasticSearch index: %s.', INDEX_NAME)
+            loader.load(data, PERSON_INDEX_NAME)
+            logging.info(
+                'Data loaded to ElasticSearch index: %s.', PERSON_INDEX_NAME
+            )
         except Exception as exc:
             logging.exception('An error occured: %s', exc)
 
 
 if __name__ == '__main__':
 
-    if not es.indices.exists(index=INDEX_NAME):
-        create_es_index(es, INDEX_NAME)
+    if not es.indices.exists(index=PERSON_INDEX_NAME):
+        create_es_index(es, PERSON_INDEX_NAME)
     
     with psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn:
 
