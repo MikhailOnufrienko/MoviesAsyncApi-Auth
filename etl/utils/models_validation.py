@@ -49,24 +49,24 @@ class ESFilmworkModel(UUIDMixin):
     writers: list[ESPersonModel] | None
 
 
-class PGFilmworkShortModel(UUIDMixin):
-    """A model to represent short info on films
-       when displayed on a genre's page.
-    
-    """
-    title: str
-    imdb_rating: float | None
+#class PGFilmworkShortModel(UUIDMixin):
+#    """A model to represent short info on films
+#       when displayed on a genre's page.
+#    
+#    """
+#    title: str
+#    imdb_rating: float | None
 
 
 class PGGenreAndFilmModel(UUIDMixin, ModifiedMixin):
     name: str
     description: str | None
-    films: list[PGFilmworkShortModel]
+#    films: list[PGFilmworkShortModel]
  
 
 class ESGenreAndFilmModel(UUIDMixin):
     name: str
     description: str | None
-    films: list[dict] | None
+#    films: list[dict] | None
 
 

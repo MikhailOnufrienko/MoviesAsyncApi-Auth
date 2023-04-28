@@ -50,20 +50,6 @@
       },
       "description": {
         "type": "text"
-      },
-      "films": {
-        "type": "nested",
-        "properties": {
-          "id": {
-            "type": "keyword"
-          },
-          "title": {
-            "type": "text"
-          },
-          "imdb_rating": {
-            "type": "float"
-          }
-        }
       }
     }
   }

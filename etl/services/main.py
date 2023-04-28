@@ -125,12 +125,12 @@ class ETL:
             filmwork_ids: set = {filmwork.get('fw_id')
                                  for filmwork in modified_data}
             for filmwork_id in filmwork_ids:
-                genres: list[str] | [] = []
-                directors: list[str] | [] = []
-                actors_names: list[str] | [] = []
-                writers_names: list[str] | [] = []
-                actors: list[dict[str, str]] | [] = []
-                writers: list[dict[str, str]] | [] = []
+                genres: list[str] | list = []
+                directors: list[str] | list = []
+                actors_names: list[str] | list = []
+                writers_names: list[str] | list = []
+                actors: list[dict[str, str]] | list = []
+                writers: list[dict[str, str]] | list = []
                 for filmwork in modified_data:
                     if filmwork.get('fw_id') == filmwork_id:
                         imdb_rating = filmwork.get('rating')
@@ -182,7 +182,7 @@ class ETL:
             genre_ids: set = {genre.get('id')
                             for genre in modified_data}
             for genre_id in genre_ids:
-                films: list[dict] | [] = []
+                films: list[dict] | list = []
                 for genre in modified_data:
                     if genre.get('id') == genre_id:
                         film = genre.get('films')
@@ -191,8 +191,7 @@ class ETL:
                     new_genre = {
                         'id': genre_id,
                         'name': genre.get('name'),
-                        'description': genre.get('description'),
-                        'films': films,
+                        'description': genre.get('description')
                     }
                     transformed_data.append(new_genre)
             for genre in transformed_data:
@@ -220,6 +219,8 @@ class ETL:
 
         """
         actions: list = []
+        for i in transformed_data:
+            print(i)
         for data in transformed_data:
             actions.append(data)
             if len(actions) == self.conf.LIMIT:
@@ -247,20 +248,20 @@ def load_to_es():
     while True:
         with ETL(state=State(storage=storage)) as etl:
 
-#            logger.info('Starting extraction of data from PostgreSQL.')
-#            number_data, modified_data = etl.extract_films()
-#            logger.info('Extracted %d modified data.', number_data)
+            logger.info('Starting extraction of data from PostgreSQL.')
+            number_data, modified_data = etl.extract_films()
+            logger.info('Extracted %d modified data.', number_data)
 
-#            if modified_data is not None:
-#                transformed_data = etl.transform_films(modified_data=modified_data)
-#                logger.info('Starting data transfer to Elasticsearch.')
+            if modified_data is not None:
+                transformed_data = etl.transform_films(modified_data=modified_data)
+                logger.info('Starting data transfer to Elasticsearch.')
 
-#                etl.load_films(transformed_data=transformed_data)
-#                logger.info('Saving state.')
+                etl.load_films(transformed_data=transformed_data)
+                logger.info('Saving state.')
 
-#                etl.save_state()
-#            else:
-#                logger.info('No data to load into Elasticsearch.')
+                etl.save_state()
+            else:
+                logger.info('No data to load into Elasticsearch.')
 
             logger.info('Starting extraction of data from PostgreSQL.')
             number_data, modified_data = etl.extract_genres()
