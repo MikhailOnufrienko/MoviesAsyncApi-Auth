@@ -6,10 +6,19 @@ from pg_extractor import PostgresExtractor
 import psycopg2
 from psycopg2.extras import DictCursor
 from es_loader import ESLoader
+import logging
+import pytz
+import datetime
+import redis
+from utils.logging_settings import setup_logging
 
 load_dotenv()
 
+setup_logging()
+
 es = Elasticsearch(hosts='http://localhost:9200/')
+
+tz = pytz.timezone('Europe/Moscow')
 
 BLOCK_SIZE = 500
 
@@ -27,17 +36,18 @@ dsl = {
 def run(extractor: PostgresExtractor, loader: ESLoader):
     """Extracting data from postgres and loading to ES."""
 
+    start_time = tz.localize(datetime.datetime.now())
+
+
     for data in extractor.extract_data():
 
-        loader.load(data, INDEX_NAME)
+        logging.info('Data block fetched from PostgreSQL.')
 
-        # break
-
-        # try:
-        #     print(len(data))
-        # except Exception:
-        #     print('error')
-
+        try:
+            loader.load(data, INDEX_NAME)
+            logging.info('Data loaded to ElasticSearch index: %s.', INDEX_NAME)
+        except Exception as exc:
+            logging.exception('An error occured: %s', exc)
 
 
 if __name__ == '__main__':
@@ -51,6 +61,3 @@ if __name__ == '__main__':
         loader = ESLoader(es)
 
         run(extractor, loader)
-
-    # if not es.indices.exists(index=INDEX_NAME):
-    #     create_es_index(es, INDEX_NAME)
