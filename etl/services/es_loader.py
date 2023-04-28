@@ -48,6 +48,7 @@ class ElasticsearchLoader:
         indexes = list(self.client.indices.get_alias().keys())
         if self.film_index_name not in indexes:
             self.create_index(self.film_index_name)
+            logger.info(f'Successfully created index {self.film_index_name}')
         if self.genre_index_name not in indexes:
             self.create_index(self.genre_index_name)
             logger.info(f'Successfully created index {self.genre_index_name}')
@@ -90,7 +91,7 @@ class ElasticsearchLoader:
             ],
             stats_only=True
         )
-        logger.info('Successfully transferred data: %s,'
+        logger.info('Successfully transferred films: %s,'
                 'failed to transfer: %s', success, failed)
 
     def transfer_genres(self, actions) -> None:
@@ -105,7 +106,7 @@ class ElasticsearchLoader:
             ],
             stats_only=True
         )
-        logger.info('Successfully transferred data: %s,'
+        logger.info('Successfully transferred genres: %s,'
                 'failed to transfer: %s', success, failed)
 
 

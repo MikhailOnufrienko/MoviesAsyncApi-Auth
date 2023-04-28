@@ -179,21 +179,13 @@ class ETL:
 
         if modified_data is not None:
             transformed_data: list = []
-            genre_ids: set = {genre.get('id')
-                            for genre in modified_data}
-            for genre_id in genre_ids:
-                films: list[dict] | list = []
-                for genre in modified_data:
-                    if genre.get('id') == genre_id:
-                        film = genre.get('films')
-                        if film not in films:
-                            films.append(film)
-                    new_genre = {
-                        'id': genre_id,
-                        'name': genre.get('name'),
-                        'description': genre.get('description')
-                    }
-                    transformed_data.append(new_genre)
+            for genre in modified_data:
+                new_genre = {
+                    'id': genre.get('id'),
+                    'name': genre.get('name'),
+                    'description': genre.get('description')
+                }
+                transformed_data.append(new_genre)
             for genre in transformed_data:
                 yield models_validation.ESGenreAndFilmModel(**genre).dict()
 
@@ -215,12 +207,10 @@ class ETL:
 
     def load_genres(self, transformed_data):
         """
-        Generate movie packets and upload them to Elasticsearch.
+        Generate genre packets and upload them to Elasticsearch.
 
         """
         actions: list = []
-        for i in transformed_data:
-            print(i)
         for data in transformed_data:
             actions.append(data)
             if len(actions) == self.conf.LIMIT:
@@ -228,6 +218,7 @@ class ETL:
                 actions.clear()
         else:
             if actions:
+                logger.info(f'actions to transfer: {actions}')
                 self.es_client.transfer_genres(actions=actions)
                 pass
 
@@ -248,35 +239,35 @@ def load_to_es():
     while True:
         with ETL(state=State(storage=storage)) as etl:
 
-            logger.info('Starting extraction of data from PostgreSQL.')
+            logger.info('Starting extraction of films from PostgreSQL.')
             number_data, modified_data = etl.extract_films()
-            logger.info('Extracted %d modified data.', number_data)
+            logger.info('Extracted %d modified films.', number_data)
 
             if modified_data is not None:
                 transformed_data = etl.transform_films(modified_data=modified_data)
-                logger.info('Starting data transfer to Elasticsearch.')
+                logger.info('Starting films transfer to Elasticsearch.')
 
                 etl.load_films(transformed_data=transformed_data)
                 logger.info('Saving state.')
 
                 etl.save_state()
             else:
-                logger.info('No data to load into Elasticsearch.')
+                logger.info('No films to load into Elasticsearch.')
 
-            logger.info('Starting extraction of data from PostgreSQL.')
+            logger.info('Starting extraction of genres from PostgreSQL.')
             number_data, modified_data = etl.extract_genres()
-            logger.info('Extracted %d modified data.', number_data)
+            logger.info('Extracted %d modified genres.', number_data)
 
             if modified_data is not None:
                 transformed_data = etl.transform_genres(modified_data=modified_data)
-                logger.info('Starting data transfer to Elasticsearch.')
+                logger.info('Starting genres transfer to Elasticsearch.')
 
                 etl.load_genres(transformed_data=transformed_data)
                 logger.info('Saving state.')
 
                 etl.save_state()
             else:
-                logger.info('No data to load into Elasticsearch.')
+                logger.info('No genres to load into Elasticsearch.')
 
 if __name__ == '__main__':
     try:
