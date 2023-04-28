@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from dotenv import load_dotenv
 from pydantic import BaseSettings
 
@@ -32,7 +30,9 @@ class ESSettings(BaseSettings):
     ES_HOST: str = config.ELASTIC_HOST
     ES_PORT: int = config.ELASTIC_PORT
     ES_INDEX: str
+    ES_GENRE_INDEX: str
     ES_SCHEMA: str
+    ES_GENRE_SCHEMA: str
 
     class Config:
         env_file = config.BASE_DIR / '.env'
