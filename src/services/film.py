@@ -21,7 +21,7 @@ class FilmService:
         self.redis = redis
         self.elastic = elastic
 
-    async def get_films(self, page: int = 1, size: int = 50) -> list[FilmShort]:
+    async def get_films(self, page: int, size: int) -> tuple[int, list[FilmShort]]:
         start_index = (page - 1) * size
         
         search_query = {
@@ -39,17 +39,18 @@ class FilmService:
             "size": size
         }
 
-        films = await self._get_films_from_elastic(search_query)
-        return films
+        total, films = await self._get_films_from_elastic(search_query)
+        return total, films
 
-    async def _get_films_from_elastic(self, search_query: str) -> list[FilmShort]:
-        """Return a list of movies."""
+    async def _get_films_from_elastic(self, search_query: str) -> tuple[int, list[FilmShort]]:
+        """Return a list of movies from Elasticsearch DB with a paginator."""
 
         result = await self.elastic.search(index='movies', body=search_query)
+        total = result['hits']['total']['value']
         hits = result['hits']['hits']
         films = [hits[i]['_source'] for i in range(search_query['size'])]
             
-        return [FilmShort(**film) for film in films]
+        return total, [FilmShort(**film) for film in films]
     
     # get_by_id возвращает объект фильма. Он опционален, так как фильм может отсутствовать в базе
     async def get_by_id(self, film_id: str) -> FilmFull | None:
@@ -68,7 +69,7 @@ class FilmService:
 
     async def _get_film_from_elastic(self, film_id: str) -> FilmFull | None:
         try:
-            doc = await self.elastic.get('movies', film_id)
+            doc = await self.elastic.get(index='movies', id=film_id)
         except NotFoundError:
             return None
         return FilmFull(**doc['_source'])

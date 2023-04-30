@@ -19,8 +19,8 @@ class Person(UUIDMixin, TimestampedMixin, ORJSONMixin):
 
 class FilmFull(FilmShort):
     description: str | None
-    genre: list[str] | None = Field(default=[])
+    genres: list[str] | None = Field(default=[])
     actors: list[Person] | None = Field(default=[])
     writers: list[Person] | None = Field(default=[])
-    director: list[str] | None = Field(default=[])
+    directors: list[str] | None = Field(default=[])
 
