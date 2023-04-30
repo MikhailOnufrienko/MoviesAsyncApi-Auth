@@ -8,6 +8,9 @@ from utils.logging_settings import setup_logging
 import logging
 
 
+setup_logging()
+
+
 class PostgresExtractor:
 
     def __init__(self, connection: pg_connection, block_size: int) -> None:
@@ -28,6 +31,8 @@ class PostgresExtractor:
             WHERE p.modified > '{extract_time}'
         """
 
+        # query = "select p.id, p.full_name, p.modified from person p where id='0031feab-8f53-412a-8f53-47098a60ac73'"
+
         if excluded_ids:
             query += f"""
                 AND (
@@ -38,6 +43,8 @@ class PostgresExtractor:
         
         query += 'ORDER BY p.modified DESC;'
 
+        self.cursor = self.connection.cursor()
+
         self.cursor.execute(query)
 
         while True:
@@ -47,6 +54,12 @@ class PostgresExtractor:
                 break
 
             model_data = []
+
+            # try:
+            #     obj = dict(data[0])
+            #     print(obj['modified'])
+            # except Exception:
+            #     print('wow')
 
             for row in data:
                 try:
@@ -60,4 +73,4 @@ class PostgresExtractor:
             
             yield model_data
         
-        self.cursor.close()
+        # self.cursor.close()

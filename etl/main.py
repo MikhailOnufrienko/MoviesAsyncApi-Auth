@@ -1,23 +1,24 @@
 from elasticsearch import Elasticsearch
 from utils.index_settings import create_es_index
 import os
+import time
 from dotenv import load_dotenv
-from pg_extractor import PostgresExtractor
+from services.pg_extractor import PostgresExtractor
 import psycopg2
 from psycopg2.extras import DictCursor
-from es_loader import ESLoader
+from services.es_loader import ESLoader
 import logging
 import pytz
 import datetime
-import redis
 from utils.logging_settings import setup_logging
 from utils.state import STATE_CLS
+from services.config import ES_HOST, SLEEP_TIME
 
 load_dotenv()
 
 setup_logging()
 
-es = Elasticsearch(hosts='http://localhost:9200/')
+es = Elasticsearch(hosts=ES_HOST)
 
 tz = pytz.timezone('Europe/Moscow')
 
@@ -40,7 +41,6 @@ def run(extractor: PostgresExtractor, loader: ESLoader):
     start_time = tz.localize(datetime.datetime.now())
 
     STATE_CLS.set_state(key='filmwork_ids', value=[])
-    STATE_CLS.set_state(key='modified_time', value=str(start_time))
 
     extract_time = datetime.datetime.strptime(
         STATE_CLS.get_state('modified_time'),
@@ -62,6 +62,8 @@ def run(extractor: PostgresExtractor, loader: ESLoader):
             )
         except Exception as exc:
             logging.exception('An error occured: %s', exc)
+    
+    STATE_CLS.set_state(key='modified_time', value=str(start_time))
 
 
 if __name__ == '__main__':
@@ -74,4 +76,12 @@ if __name__ == '__main__':
         extractor = PostgresExtractor(pg_conn, BLOCK_SIZE)
         loader = ESLoader(es)
 
-        run(extractor, loader)
+        while True:
+
+            try:
+                run(extractor, loader)
+                time.sleep(SLEEP_TIME)
+            except Exception as exc:
+                pg_conn.close()
+                es.close()
+                logging.exception('An error occured: %s', exc)

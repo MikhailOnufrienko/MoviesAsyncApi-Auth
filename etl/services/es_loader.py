@@ -23,5 +23,3 @@ class ESLoader:
             actions.append(action)
 
         bulk(self.es, actions)
-
-
