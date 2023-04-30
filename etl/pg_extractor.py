@@ -4,6 +4,8 @@ import pydantic
 from psycopg2.extensions import connection as pg_connection
 
 from utils.pydantic_schemas import PersonInfo
+from utils.logging_settings import setup_logging
+import logging
 
 
 class PostgresExtractor:
@@ -15,25 +17,26 @@ class PostgresExtractor:
         self.cursor.arraysize = block_size
     
     def extract_data(self,
-            # start_time: datetime,
-            # extract_time: datetime, excluded_ids: list
+            start_time: datetime,
+            extract_time: datetime, excluded_ids: list
     ) -> list:
         """Extracting person data from PostgreSQL."""
 
         query = f"""
             SELECT p.id, p.full_name
             FROM person p
+            WHERE p.modified > '{extract_time}'
         """
 
-        # if excluded_ids:
-        #     query += f"""
-        #         AND (
-        #             p.id not in '{excluded_ids}' OR
-        #             MAX(p.modified) > '{start_time}'
-        #         )
-        #     """
+        if excluded_ids:
+            query += f"""
+                AND (
+                    p.id not in '{excluded_ids}' OR
+                    MAX(p.modified) > '{start_time}'
+                )
+            """
         
-        query += 'ORDER BY id DESC;'
+        query += 'ORDER BY p.modified DESC;'
 
         self.cursor.execute(query)
 
@@ -48,14 +51,12 @@ class PostgresExtractor:
             for row in data:
                 try:
                     PersonInfo(**row)
-                    # model_data.append(PersonInfo(**row))
-                    # model_data.append(row)
                 except pydantic.ValidationError as exc:
-                    pass # logging in future
+                    logging.exception('Validation Error: %s', exc)
 
                 model_data.append(dict(row))
             
-                # excluded_ids.append(row['id'])
+                excluded_ids.append(row['id'])
             
             yield model_data
         

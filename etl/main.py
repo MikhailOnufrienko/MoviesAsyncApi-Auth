@@ -39,8 +39,19 @@ def run(extractor: PostgresExtractor, loader: ESLoader):
 
     start_time = tz.localize(datetime.datetime.now())
 
+    STATE_CLS.set_state(key='filmwork_ids', value=[])
+    STATE_CLS.set_state(key='modified_time', value=str(start_time))
 
-    for data in extractor.extract_data():
+    extract_time = datetime.datetime.strptime(
+        STATE_CLS.get_state('modified_time'),
+        '%Y-%m-%d %H:%M:%S.%f%z'
+    )
+
+    for data in extractor.extract_data(
+        start_time=start_time,
+        extract_time=extract_time,
+        excluded_ids=STATE_CLS.get_state('filmwork_ids')
+    ):
 
         logging.info('Data block fetched from PostgreSQL.')
 
