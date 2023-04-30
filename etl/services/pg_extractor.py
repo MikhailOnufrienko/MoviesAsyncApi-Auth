@@ -1,12 +1,11 @@
+import logging
 from datetime import datetime
 
 import pydantic
 from psycopg2.extensions import connection as pg_connection
 
-from utils.pydantic_schemas import PersonInfo
 from utils.logging_settings import setup_logging
-import logging
-
+from utils.pydantic_schemas import PersonInfo
 
 setup_logging()
 
@@ -18,9 +17,9 @@ class PostgresExtractor:
         self.cursor = self.connection.cursor()
         self.cursor.execute('SET search_path TO content;')
         self.cursor.arraysize = block_size
-    
-    def extract_data(self,
-            start_time: datetime,
+
+    def extract_data(
+            self, start_time: datetime,
             extract_time: datetime, excluded_ids: list
     ) -> list:
         """Extracting person data from PostgreSQL."""
@@ -31,8 +30,6 @@ class PostgresExtractor:
             WHERE p.modified > '{extract_time}'
         """
 
-        # query = "select p.id, p.full_name, p.modified from person p where id='0031feab-8f53-412a-8f53-47098a60ac73'"
-
         if excluded_ids:
             query += f"""
                 AND (
@@ -40,11 +37,10 @@ class PostgresExtractor:
                     MAX(p.modified) > '{start_time}'
                 )
             """
-        
+
         query += 'ORDER BY p.modified DESC;'
 
         self.cursor = self.connection.cursor()
-
         self.cursor.execute(query)
 
         while True:
@@ -55,12 +51,6 @@ class PostgresExtractor:
 
             model_data = []
 
-            # try:
-            #     obj = dict(data[0])
-            #     print(obj['modified'])
-            # except Exception:
-            #     print('wow')
-
             for row in data:
                 try:
                     PersonInfo(**row)
@@ -68,9 +58,9 @@ class PostgresExtractor:
                     logging.exception('Validation Error: %s', exc)
 
                 model_data.append(dict(row))
-            
+
                 excluded_ids.append(row['id'])
-            
+
             yield model_data
-        
-        # self.cursor.close()
+
+        self.cursor.close()

@@ -6,7 +6,7 @@ class ESLoader:
 
     def __init__(self, es: Elasticsearch) -> None:
         self.es = es
-    
+
     def load(self, data: list, index_name: str) -> None:
         """Loading data to ES."""
 
