@@ -21,7 +21,9 @@ class FilmService:
         self.redis = redis
         self.elastic = elastic
 
-    async def get_films(self, skip: int = 0, limit: int = 50) -> list[FilmShort]:
+    async def get_films(self, page: int = 1, size: int = 50) -> list[FilmShort]:
+        start_index = (page - 1) * size
+        
         search_query = {
             "query": {
                 "match_all": {}
@@ -33,8 +35,8 @@ class FilmService:
                     }
                 }
             ],
-            "from": skip,
-            "size": limit
+            "from": start_index,
+            "size": size
         }
 
         films = await self._get_films_from_elastic(search_query)
@@ -43,12 +45,6 @@ class FilmService:
     async def _get_films_from_elastic(self, search_query: str) -> list[FilmShort]:
         """Return a list of movies."""
 
-#        async with self.elastic as es_client:
-#            async for doc in es_client.search(index='movies', body=search_query):
-#                yield doc["_source"]
-
-#        for doc in async_scan(self.elastic, query=search_query, index='movies'):
-#            return doc["_source"]
         result = await self.elastic.search(index='movies', body=search_query)
         hits = result['hits']['hits']
         films = [hits[i]['_source'] for i in range(search_query['size'])]

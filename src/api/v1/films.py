@@ -21,11 +21,19 @@ class Film(BaseModel):
     imdb_rating: float
 
 
+class FilmList(BaseModel):
+    total: int
+    page: int
+    size: int
+    results: list[Film]
+
+
 @router.get('/', response_model=list[Film])
 async def filmlist(
+    page: int = 1,
     film_service: FilmService = Depends(get_film_service)
 ) -> list[Film]:
-    filmlist = await film_service.get_films()
+    filmlist = await film_service.get_films(page=page)
     return [Film(
         id=film.id,
         title=film.title,
