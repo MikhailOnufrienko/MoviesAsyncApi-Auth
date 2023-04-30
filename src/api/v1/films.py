@@ -18,6 +18,20 @@ router = APIRouter()
 class Film(BaseModel):
     id: str
     title: str
+    imdb_rating: float
+
+
+@router.get('/', response_model=list[Film])
+async def filmlist(
+    film_service: FilmService = Depends(get_film_service)
+) -> list[Film]:
+    filmlist = await film_service.get_films()
+    return [Film(
+        id=film.id,
+        title=film.title,
+        imdb_rating=film.imdb_rating
+        ) for film in filmlist]
+
 
 # Внедряем FilmService с помощью Depends(get_film_service)
 @router.get('/{film_id}', response_model=Film)

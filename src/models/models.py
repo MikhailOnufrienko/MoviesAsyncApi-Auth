@@ -1,9 +1,9 @@
 from pydantic import Field
 
-from .mixins import ORJSONMixin, TimestampedMixin, UUIDMixin
+from src.models.mixins import ORJSONMixin, TimestampedMixin, UUIDMixin
 
 
-class FilmShort(UUIDMixin, TimestampedMixin, ORJSONMixin):
+class FilmShort(UUIDMixin, ORJSONMixin):
     title: str
     imdb_rating: float
     

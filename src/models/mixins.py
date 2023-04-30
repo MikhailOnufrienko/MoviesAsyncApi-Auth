@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import orjson
 from pydantic import BaseModel
 
 
@@ -8,7 +9,7 @@ def orjson_dumps(v, *, default):
 
 
 class UUIDMixin(BaseModel):
-    id: UUID
+    id: str
 
 
 class TimestampedMixin(BaseModel):
