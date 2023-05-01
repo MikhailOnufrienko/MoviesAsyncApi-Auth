@@ -10,6 +10,7 @@ from models.person import Person
 from models.film import PersonShortFilm
 import json
 import logging
+from utils.search_films import get_films
 
 
 GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
@@ -29,53 +30,10 @@ class PersonService:
         except NotFoundError:
             return None
     
-        person_name = doc['_source']['full_name']
+        person = doc['_source']
+        movies_data = await get_films(self.elastic, person['full_name'])
 
-        query_movies = {
-            "bool": {
-                "should": [
-                    { "match_phrase": { "actors_names": person_name } },
-                    { "match_phrase": { "director": person_name } },
-                    { "match_phrase": { "writers_names": person_name } }
-                ]
-            }
-        }
-
-        results = await self.elastic.search(index="movies_index", query=query_movies)
-
-        movie_data = []
-
-        for movie in results['hits']['hits']:
-            movie = movie['_source']
-            roles = []
-            if person_name in movie['actors_names']:
-                roles.append('actor')
-            if person_name in movie['director']:
-                roles.append('director')
-            if person_name in movie['writers_names']:
-                roles.append('writer')
-            obj = PersonShortFilm(uuid=movie['id'], roles=roles)
-            movie_data.append(obj)
-
-        return Person(**doc['_source']), movie_data
-
-        # query_movies = {
-        #     "bool": {
-        #         "should": [
-        #             { "match": { "actors_names": person_name } },
-        #             { "match": { "director": person_name } },
-        #             { "match": { "writers_names": person_name } }
-        #         ]
-        #     }
-        # }
-
-        # results = self.elastic.search(index="movies_index", query=query_movies)
-
-        # print(results['hits']['hits'])
-
-        # counter += 1
-
-        # return Person(**doc['_source'])
+        return Person(**person), movies_data
 
     async def get_object_list(self, page, page_size, query) -> list | None:
 
@@ -101,39 +59,44 @@ class PersonService:
 
             for person in hits:
                 person = person['_source']
-                person_name = person['full_name']
                 single_person_data = []
                 single_person_data.append(Person(**person))
 
-                query_movies = {
-                    "bool": {
-                        "should": [
-                            { "match_phrase": { "actors_names": person_name } },
-                            { "match_phrase": { "director": person_name } },
-                            { "match_phrase": { "writers_names": person_name } }
-                        ]
-                    }
-                }
+                movie_data = await get_films(self.elastic, person['full_name'])
 
-                results = await self.elastic.search(index="movies_index", query=query_movies)
-
-                movie_data = []
-
-                for movie in results['hits']['hits']:
-                    movie = movie['_source']
-                    roles = []
-                    if movie['actors_names'] is not None and person_name in movie['actors_names']:
-                        roles.append('actor')
-                    if movie['director'] is not None and person_name in movie['director']:
-                        roles.append('director')
-                    if movie['writers_names'] is not None and person_name in movie['writers_names']:
-                        roles.append('writer')
-                    obj = PersonShortFilm(uuid=movie['id'], roles=roles)
-                    movie_data.append(obj)
-                
                 single_person_data.append(movie_data)
 
                 data.append(single_person_data)
+
+                # query_movies = {
+                #     "bool": {
+                #         "should": [
+                #             { "match_phrase": { "actors_names": person_name } },
+                #             { "match_phrase": { "director": person_name } },
+                #             { "match_phrase": { "writers_names": person_name } }
+                #         ]
+                #     }
+                # }
+
+                # results = await self.elastic.search(index="movies_index", query=query_movies)
+
+                # movie_data = []
+
+                # for movie in results['hits']['hits']:
+                #     movie = movie['_source']
+                #     roles = []
+                    # if movie['actors_names'] is not None and person_name in movie['actors_names']:
+                    #     roles.append('actor')
+                    # if movie['director'] is not None and person_name in movie['director']:
+                    #     roles.append('director')
+                    # if movie['writers_names'] is not None and person_name in movie['writers_names']:
+                    #     roles.append('writer')
+                #     obj = PersonShortFilm(uuid=movie['id'], roles=roles)
+                #     movie_data.append(obj)
+                
+                # single_person_data.append(movie_data)
+
+                # data.append(single_person_data)
 
 
 
