@@ -47,7 +47,15 @@ class Person(BaseModel):
 async def person_list_search(person_service: PersonService = Depends(get_person_service), page: int = 1, page_size: int = 10, query: str | None = None):
     objects = await person_service.get_object_list(page, page_size, query)
 
-    return [dict(p) for p in objects]
+    # return [dict(p) for p in objects]
+
+    data = []
+
+    for item in objects:
+        person, films = item[0], item[1]
+        data.append(Person(id=person.id, full_name=person.full_name, films=films))
+
+    return data
 
 
 @router.get('/{person_id}', response_model=Person)

@@ -88,7 +88,7 @@ class PersonService:
         else:
             query = {"match_all": {}}
 
-        person_data = []
+        data = []
 
         from_page = (page - 1) * page_size
 
@@ -99,20 +99,48 @@ class PersonService:
             )
             hits = response['hits']['hits']
 
-            counter = 0
-
             for person in hits:
-                person_data.append(Person(**person['_source']))
+                person = person['_source']
+                person_name = person['full_name']
+                single_person_data = []
+                single_person_data.append(Person(**person))
 
+                query_movies = {
+                    "bool": {
+                        "should": [
+                            { "match_phrase": { "actors_names": person_name } },
+                            { "match_phrase": { "director": person_name } },
+                            { "match_phrase": { "writers_names": person_name } }
+                        ]
+                    }
+                }
 
+                results = await self.elastic.search(index="movies_index", query=query_movies)
 
+                movie_data = []
+
+                for movie in results['hits']['hits']:
+                    movie = movie['_source']
+                    roles = []
+                    if movie['actors_names'] is not None and person_name in movie['actors_names']:
+                        roles.append('actor')
+                    if movie['director'] is not None and person_name in movie['director']:
+                        roles.append('director')
+                    if movie['writers_names'] is not None and person_name in movie['writers_names']:
+                        roles.append('writer')
+                    obj = PersonShortFilm(uuid=movie['id'], roles=roles)
+                    movie_data.append(obj)
+                
+                single_person_data.append(movie_data)
+
+                data.append(single_person_data)
 
 
 
         except Exception as exc:
             logging.exception('An error occured: %s', exc)
 
-        return person_data
+        return data
 
 
 @lru_cache
