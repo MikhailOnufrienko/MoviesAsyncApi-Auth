@@ -59,7 +59,7 @@ class ElasticsearchLoader:
         logger.info('Elasticsearch connection closed.')
 
     def create_index(self, index_name: str):
-        if 'film' in index_name:
+        if 'movie' in index_name:
             body = self.film_schema
             if body:
                 self.client.indices.create(index=index_name, body=body)

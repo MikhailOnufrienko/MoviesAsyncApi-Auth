@@ -254,7 +254,7 @@ def load_to_es():
             else:
                 logger.info('No films to load into Elasticsearch.')
 
-            logger.info('Starting extraction of genres from PostgreSQL.')
+"""             logger.info('Starting extraction of genres from PostgreSQL.')
             number_data, modified_data = etl.extract_genres()
             logger.info('Extracted %d modified genres.', number_data)
 
@@ -268,7 +268,7 @@ def load_to_es():
                 etl.save_state()
             else:
                 logger.info('No genres to load into Elasticsearch.')
-
+ """
 if __name__ == '__main__':
     try:
         load_to_es()
