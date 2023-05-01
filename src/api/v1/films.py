@@ -28,13 +28,21 @@ class FilmList(BaseModel):
     size: int
     results: list[FilmShort]
 
+class Genre(BaseModel):
+    id: UUID
+    name: str
+
+class Person(BaseModel):
+    id: UUID
+    full_name: str | None
+
 
 class FilmFull(FilmShort, BaseModel):
     description: str | None
-    genres: list[dict] | None = Field(default=[])
-    actors: list[dict] | None = Field(default=[])
-    writers: list[dict] | None = Field(default=[])
-    directors: list[dict] | None = Field(default=[])
+    genres: list[str] | None = Field(default=[])
+    actors: list[Person] | None = Field(default=[])
+    writers: list[Person] | None = Field(default=[])
+    directors: list[str] | None = Field(default=[])
 
 
 @router.get('/', response_model=FilmList)
@@ -79,9 +87,9 @@ async def film_details(
         title=film.title,
         imdb_rating=film.imdb_rating,
         description=film.description,
-        genres=film.genres,
+        genres=film.genre,
         actors=film.actors,
         writers=film.writers,
-        directors=film.directors
+        directors=film.director
         )
  

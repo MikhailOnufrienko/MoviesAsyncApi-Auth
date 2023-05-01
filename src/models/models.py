@@ -8,19 +8,19 @@ class FilmShort(UUIDMixin, ORJSONMixin):
     imdb_rating: float
     
 
-class Genre(UUIDMixin, TimestampedMixin, ORJSONMixin):
+class Genre(UUIDMixin, ORJSONMixin):
     title: str
     description: str
 
 
-class Person(UUIDMixin, TimestampedMixin, ORJSONMixin):
-    full_name: str
+class Person(UUIDMixin, ORJSONMixin):
+    full_name: str | None
 
 
 class FilmFull(FilmShort):
     description: str | None
-    genres: list[str] | None = Field(default=[])
+    genre: list[str] | None = Field(default=[])
     actors: list[Person] | None = Field(default=[])
     writers: list[Person] | None = Field(default=[])
-    directors: list[str] | None = Field(default=[])
+    director: list[str] | None = Field(default=[])
 
