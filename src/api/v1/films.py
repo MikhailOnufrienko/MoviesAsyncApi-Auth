@@ -48,7 +48,7 @@ class FilmFull(FilmShort, BaseModel):
 @router.get('/', response_model=FilmList)
 async def filmlist(
     page: int = 1,
-    size: int = 50,
+    size: int = 20,
     film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
     total, filmlist = await film_service.get_films(page=page, size=size)
@@ -62,6 +62,23 @@ async def filmlist(
             "imdb_rating": film.imdb_rating}for film in filmlist]
         )
 
+@router.get('/search', response_model=FilmList)
+async def film_search(
+        query: str,
+        page: int = 1,
+        size: int = 20,
+        film_service: FilmService = Depends(get_film_service)
+) -> FilmList:
+    total, filmlist = await film_service.search_films(query=query, page=page, size=size)
+    return FilmList(
+        total=total,
+        page=page,
+        size=size if total >= size else total,
+        results=[{
+            "id": film.id,
+            "title": film.title,
+            "imdb_rating": film.imdb_rating}for film in filmlist]
+    )
 
 # Внедряем FilmService с помощью Depends(get_film_service)
 @router.get('/{film_id}', response_model=FilmFull)

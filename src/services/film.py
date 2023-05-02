@@ -42,13 +42,47 @@ class FilmService:
         total, films = await self._get_films_from_elastic(search_query)
         return total, films
 
-    async def _get_films_from_elastic(self, search_query: str) -> tuple[int, list[FilmShort]]:
+    async def search_films(self, query: str, page: int, size: int) -> tuple[int, list[FilmShort]]:
+        start_index = (page - 1) * size
+
+        search_query = {
+            "query": {
+                "match": {
+                    "title": query
+                }
+            },
+            "sort": [
+                {
+                    "_score": {
+                        "order": "desc"
+                    }
+                },
+                {
+                    "imdb_rating": {
+                        "order": "desc"
+                    }
+                }
+            ],
+            "from": start_index,
+            "size": size
+        }
+
+        total, films = await self._get_films_from_elastic(search_query)
+        return total, films
+
+    async def _get_films_from_elastic(self, search_query: dict) -> tuple[int, list[FilmShort]]:
         """Return a list of movies from Elasticsearch DB with a paginator."""
 
         result = await self.elastic.search(index='movies', body=search_query)
         total = result['hits']['total']['value']
         hits = result['hits']['hits']
-        films = [hits[i]['_source'] for i in range(search_query['size'])]
+
+        if not hits:
+            return total, []
+        try:
+            films = [hits[i]['_source'] for i in range(search_query['size'])]
+        except IndexError:
+            films = [hit['_source'] for hit in hits]
             
         return total, [FilmShort(**film) for film in films]
     
