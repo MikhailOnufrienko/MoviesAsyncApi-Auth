@@ -72,3 +72,12 @@ async def person_detail(
         )
     
     return Person(id=person.id, full_name=person.full_name, films=movies)
+
+
+@router.get('/{person_id}/film')
+async def person_detail_films(person_id: str, person_service: PersonService = Depends(get_person_service)):
+    """pass"""
+
+    movies = await person_service.get_films_by_person(person_id)
+
+    return movies

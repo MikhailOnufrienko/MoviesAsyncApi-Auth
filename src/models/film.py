@@ -21,3 +21,9 @@ class Film(BaseModel):
 class PersonShortFilm(BaseModel):
     uuid: str
     roles: list
+
+
+class PersobShortFilmInfo(BaseModel):
+    uuid: str
+    title: str
+    imdb_rating: float

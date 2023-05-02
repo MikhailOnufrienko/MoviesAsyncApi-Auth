@@ -7,7 +7,7 @@ from redis.asyncio import Redis
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.person import Person
-from models.film import PersonShortFilm
+from models.film import PersonShortFilm, PersobShortFilmInfo
 import json
 import logging
 from utils.search_films import get_films
@@ -68,43 +68,46 @@ class PersonService:
 
                 data.append(single_person_data)
 
-                # query_movies = {
-                #     "bool": {
-                #         "should": [
-                #             { "match_phrase": { "actors_names": person_name } },
-                #             { "match_phrase": { "director": person_name } },
-                #             { "match_phrase": { "writers_names": person_name } }
-                #         ]
-                #     }
-                # }
-
-                # results = await self.elastic.search(index="movies_index", query=query_movies)
-
-                # movie_data = []
-
-                # for movie in results['hits']['hits']:
-                #     movie = movie['_source']
-                #     roles = []
-                    # if movie['actors_names'] is not None and person_name in movie['actors_names']:
-                    #     roles.append('actor')
-                    # if movie['director'] is not None and person_name in movie['director']:
-                    #     roles.append('director')
-                    # if movie['writers_names'] is not None and person_name in movie['writers_names']:
-                    #     roles.append('writer')
-                #     obj = PersonShortFilm(uuid=movie['id'], roles=roles)
-                #     movie_data.append(obj)
-                
-                # single_person_data.append(movie_data)
-
-                # data.append(single_person_data)
-
-
-
         except Exception as exc:
             logging.exception('An error occured: %s', exc)
 
         return data
 
+    async def get_films_by_person(self, person_id):
+        """Get list of films where the person has participated."""
+
+        try:
+            doc = await self.elastic.get(
+                index='person_index', id=person_id
+            )
+        except NotFoundError:
+            return None
+        
+        person = doc['_source']
+
+        query_movies = {
+            "bool": {
+                "should": [
+                    { "match_phrase": { "actors_names": person['full_name'] } },
+                    { "match_phrase": { "director": person['full_name'] } },
+                    { "match_phrase": { "writers_names": person['full_name'] } }
+                ]
+            }
+        }
+
+        films = await self.elastic.search(index="movies_index", query=query_movies)
+
+        movie_data = []
+
+        for film in films['hits']['hits']:
+
+            film = film['_source']
+
+            obj = PersobShortFilmInfo(uuid=film['id'], title=film['title'], imdb_rating=film['imdb_rating'])
+            
+            movie_data.append(obj)
+        
+        return movie_data
 
 @lru_cache
 def get_person_service(elastic = Depends(get_elastic)):
