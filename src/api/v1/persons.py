@@ -2,12 +2,9 @@ from http import HTTPStatus
 
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi import APIRouter, Depends
-from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 
 from services.person import PersonService, get_person_service
-import json
 
 
 router = APIRouter()
@@ -18,71 +15,63 @@ class PersonShortFilm(BaseModel):
     roles: list
 
 
-class PersonShortFilmInfo(BaseModel):
-    uuid: str
-    title: str
-    imdb_rating: float
-
-
 class Person(BaseModel):
     id: str
     full_name: str
     films: list[PersonShortFilm]
 
 
-# @router.get('/')
-# async def person_list(person_service: PersonService = Depends(get_person_service), page: int = 1, page_size: int = 10, query: str | None = None):
-
-#     # objects = [Person(id='1', full_name='Name One'), Person(id='2', full_name='Name Two')]
-
-#     # return [dict(p) for p in objects]
-
-#     objects = await person_service.get_object_list(page, page_size, query)
-
-#     return [dict(p) for p in objects]
-
-#     # persons = await person_service.get_list()
-
-#     # objects = ['James', 'Sandor']
-#     # return json.dumps(objects)
-
-#     # return persons
-
-
 @router.get('/search')
-async def person_list_search(person_service: PersonService = Depends(get_person_service), page: int = 1, page_size: int = 10, query: str | None = None):
+async def person_list_search(
+    person_service: PersonService = Depends(get_person_service),
+    page: int = 1,
+    page_size: int = 10,
+    query: str | None = None
+) -> list:
+    """API Endpoint for a list of persons and their roles in films."""
+
     objects = await person_service.get_object_list(page, page_size, query)
-
-    # return [dict(p) for p in objects]
-
     data = []
 
     for item in objects:
-        person, films = item[0], item[1]
-        data.append(Person(id=person.id, full_name=person.full_name, films=films))
+        person, films = item
+        data.append(
+            Person(
+                id=person.id,
+                full_name=person.full_name,
+                films=films
+            )
+        )
 
     return data
 
 
 @router.get('/{person_id}', response_model=Person)
 async def person_detail(
-    person_id: str, person_service: PersonService = Depends(get_person_service)
-) -> Person:
-    """pass."""
+    person_id: str,
+    person_service: PersonService = Depends(get_person_service)
+) -> Person | HTTPException:
+    """API Endpoint to retrieve information about a person by his id."""
 
     person, movies = await person_service.get_by_id(person_id)
 
     if not person:
         raise HTTPException(
-            status_code=404, detail='person not found'
+            status_code=HTTPStatus.NOT_FOUND, detail='person not found'
         )
-    
+
     return Person(id=person.id, full_name=person.full_name, films=movies)
 
 
 @router.get('/{person_id}/film')
-async def person_detail_films(person_id: str, person_service: PersonService = Depends(get_person_service)):
-    """pass"""
+async def person_detail_films(
+    person_id: str,
+    person_service: PersonService = Depends(get_person_service)
+) -> list:
+    """
+    API Endpoint to get information about films
+    in which the person was involved.
+    """
 
     movies = await person_service.get_films_by_person(person_id)
 
