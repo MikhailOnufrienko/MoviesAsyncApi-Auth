@@ -1,4 +1,4 @@
-from .settings import etl_settings
+from etl.utils.settings import etl_settings
 
 
 def get_modified_genres(timestamp: int) -> str:
@@ -90,6 +90,7 @@ def get_filmwork_by_id(ids: tuple) -> str:
             pfw.role,
             p.id as person_id,
             p.full_name,
+            g.id as genre_id,
             g.name as genre
         FROM content.film_work fw
         LEFT JOIN content.person_film_work pfw ON pfw.film_work_id = fw.id

@@ -9,18 +9,18 @@ class FilmShort(UUIDMixin, ORJSONMixin):
     
 
 class Genre(UUIDMixin, ORJSONMixin):
-    title: str
-    description: str
+    name: str
+    description: str | None
 
 
 class Person(UUIDMixin, ORJSONMixin):
-    full_name: str | None
+    name: str | None
 
 
 class FilmFull(FilmShort):
     description: str | None
-    genre: list[str] | None = Field(default=[])
+    genre: list[Genre] | None = Field(default=[])
     actors: list[Person] | None = Field(default=[])
     writers: list[Person] | None = Field(default=[])
-    director: list[str] | None = Field(default=[])
+    director: list[Person] | None = Field(default=[])
 

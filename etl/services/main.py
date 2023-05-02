@@ -125,8 +125,8 @@ class ETL:
             filmwork_ids: set = {filmwork.get('fw_id')
                                  for filmwork in modified_data}
             for filmwork_id in filmwork_ids:
-                genres: list[str] | list = []
-                directors: list[str] | list = []
+                genres: list[dict[str, str]] | list = []
+                directors: list[dict[str, str]] | list = []
                 actors_names: list[str] | list = []
                 writers_names: list[str] | list = []
                 actors: list[dict[str, str]] | list = []
@@ -136,14 +136,16 @@ class ETL:
                         imdb_rating = filmwork.get('rating')
                         title = filmwork.get('title')
                         description = filmwork.get('description')
-                        if filmwork.get('genre') not in genres:
-                            genres.append(filmwork.get('genre'))
+                        genre_instance = {'id': filmwork.get('genre_id'),
+                                           'name': filmwork.get('genre')}
+                        if genre_instance not in genres:
+                            genres.append(genre_instance)
                         person_name = filmwork.get('full_name')
                         person_instance = {'id': filmwork.get('person_id'),
                                            'name': person_name}
                         if filmwork.get('role') == 'director':
-                            if person_name not in directors:
-                                directors.append(person_name)
+                            if person_instance not in directors:
+                                directors.append(person_instance)
                         elif filmwork.get('role') == 'actor':
                             if person_name not in actors_names:
                                 actors_names.append(person_name)
@@ -166,6 +168,7 @@ class ETL:
                             'actors': actors,
                             'writers': writers,
                         }
+
                 transformed_data.append(new_filmwork)
             for filmwork in transformed_data:
                 yield models_validation.ESFilmworkModel(**filmwork).dict()
@@ -254,7 +257,7 @@ def load_to_es():
             else:
                 logger.info('No films to load into Elasticsearch.')
 
-"""             logger.info('Starting extraction of genres from PostgreSQL.')
+            logger.info('Starting extraction of genres from PostgreSQL.')
             number_data, modified_data = etl.extract_genres()
             logger.info('Extracted %d modified genres.', number_data)
 
@@ -268,7 +271,7 @@ def load_to_es():
                 etl.save_state()
             else:
                 logger.info('No genres to load into Elasticsearch.')
- """
+
 if __name__ == '__main__':
     try:
         load_to_es()

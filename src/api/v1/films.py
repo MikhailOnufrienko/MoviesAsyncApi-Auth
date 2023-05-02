@@ -34,15 +34,15 @@ class Genre(BaseModel):
 
 class Person(BaseModel):
     id: UUID
-    full_name: str | None
+    name: str | None
 
 
 class FilmFull(FilmShort, BaseModel):
     description: str | None
-    genres: list[str] | None = Field(default=[])
+    genres: list[Genre] | None = Field(default=[])
     actors: list[Person] | None = Field(default=[])
     writers: list[Person] | None = Field(default=[])
-    directors: list[str] | None = Field(default=[])
+    directors: list[Person] | None = Field(default=[])
 
 
 @router.get('/', response_model=FilmList)
