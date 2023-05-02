@@ -8,8 +8,8 @@ def orjson_dumps(v, *, default):
 
 
 class Genre(BaseModel):
-    id: str
-    title: str
+    uuid: str
+    name: str
 
     class Config:
         json_loads = orjson.loads
