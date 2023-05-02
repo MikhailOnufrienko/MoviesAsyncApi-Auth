@@ -26,6 +26,8 @@ class FilmList(BaseModel):
     total: int
     page: int
     size: int
+    prev: str | None
+    next: str | None
     results: list[FilmShort]
 
 class Genre(BaseModel):
@@ -66,14 +68,26 @@ async def filmlist(
 async def film_search(
         query: str,
         page: int = 1,
-        size: int = 20,
+        size_default: int = 20,
         film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
-    total, filmlist = await film_service.search_films(query=query, page=page, size=size)
+    total, filmlist = await film_service.search_films(query=query, page=page, size=size_default)
+    prev = f'/search?query={query}&page={page-1}' if page > 1 else None
+    next = f'/search?query={query}&page={page+1}' if (page - 1) * size_default + len(filmlist) < total else None
+    if total >= size_default:
+        if next:
+            size = size_default
+        else:
+            size = total - size_default * (page - 1)
+    else:
+        size = total
+    
     return FilmList(
         total=total,
         page=page,
-        size=size if total >= size else total,
+        size=size,
+        prev=prev,
+        next=next,
         results=[{
             "id": film.id,
             "title": film.title,
