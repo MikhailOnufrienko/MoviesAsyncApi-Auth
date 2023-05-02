@@ -18,6 +18,12 @@ class PersonShortFilm(BaseModel):
     roles: list
 
 
+class PersonShortFilmInfo(BaseModel):
+    uuid: str
+    title: str
+    imdb_rating: float
+
+
 class Person(BaseModel):
     id: str
     full_name: str

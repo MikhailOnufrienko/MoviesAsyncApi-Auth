@@ -7,10 +7,10 @@ from redis.asyncio import Redis
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.person import Person
-from models.film import PersonShortFilm, PersobShortFilmInfo
+from models.film import PersonShortFilm, PersonShortFilmInfo
 import json
 import logging
-from utils.search_films import get_films
+from utils.search_films import get_films, get_roles
 
 
 GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
@@ -21,21 +21,47 @@ class PersonService:
     def __init__(self, elastic: AsyncElasticsearch):
         self.elastic = elastic
     
-    async def get_by_id(self, person_id: str) -> Person | None:
+    async def get_by_id(self, person_id: str) -> tuple[Person | None, list]:
+        """
+        Returns information about the person by his id.
+
+        Parameters:
+            person_id: uuid of the person.
         
+        Returns:
+            person: person class object
+            movie_data: list of films
+        """
+
         try:
             doc = await self.elastic.get(
                 index='person_index', id=person_id
             )
         except NotFoundError:
             return None
-    
+
         person = doc['_source']
-        movies_data = await get_films(self.elastic, person['full_name'])
+        films = await get_films(self.elastic, person['full_name'])
+        movie_data = await get_roles(films, person['full_name'])
+        person = Person(**person)
 
-        return Person(**person), movies_data
+        return person, movie_data
 
-    async def get_object_list(self, page, page_size, query) -> list | None:
+    async def get_object_list(
+        self, page: int,
+        page_size: int, query: str | None
+    ) -> list | None:
+        """
+        Returns a list with information about persons.
+
+        Parameters:
+            page: page number
+            page_size: size of the page
+            query: field that is searched for
+        
+        Returns:
+            data: list of persons
+        """
 
         if query:
             query = {
@@ -47,7 +73,6 @@ class PersonService:
             query = {"match_all": {}}
 
         data = []
-
         from_page = (page - 1) * page_size
 
         try:
@@ -55,17 +80,16 @@ class PersonService:
                 index='person_index', query=query, from_=from_page,
                 size=page_size, sort=[{"id": {"order": "asc"}}]
             )
-            hits = response['hits']['hits']
 
-            for person in hits:
+            for person in response['hits']['hits']:
                 person = person['_source']
                 single_person_data = []
                 single_person_data.append(Person(**person))
 
-                movie_data = await get_films(self.elastic, person['full_name'])
+                films = await get_films(self.elastic, person['full_name'])
+                movie_data = await get_roles(films, person['full_name'])
 
                 single_person_data.append(movie_data)
-
                 data.append(single_person_data)
 
         except Exception as exc:
@@ -85,29 +109,18 @@ class PersonService:
         
         person = doc['_source']
 
-        query_movies = {
-            "bool": {
-                "should": [
-                    { "match_phrase": { "actors_names": person['full_name'] } },
-                    { "match_phrase": { "director": person['full_name'] } },
-                    { "match_phrase": { "writers_names": person['full_name'] } }
-                ]
-            }
-        }
-
-        films = await self.elastic.search(index="movies_index", query=query_movies)
+        films = await get_films(self.elastic, person['full_name'])
 
         movie_data = []
 
-        for film in films['hits']['hits']:
+        for film in films:
 
-            film = film['_source']
-
-            obj = PersobShortFilmInfo(uuid=film['id'], title=film['title'], imdb_rating=film['imdb_rating'])
+            obj = PersonShortFilmInfo(uuid=film['id'], title=film['title'], imdb_rating=film['imdb_rating'])
             
             movie_data.append(obj)
         
         return movie_data
+
 
 @lru_cache
 def get_person_service(elastic = Depends(get_elastic)):
