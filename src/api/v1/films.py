@@ -19,7 +19,7 @@ router = APIRouter()
 class FilmShort(BaseModel):
     id: UUID
     title: str
-    imdb_rating: float
+    imdb_rating: float | None
 
 
 class FilmList(BaseModel):
@@ -50,14 +50,25 @@ class FilmFull(FilmShort, BaseModel):
 @router.get('/', response_model=FilmList)
 async def filmlist(
     page: int = 1,
-    size: int = 20,
+    size_default: int = 20,
     film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
-    total, filmlist = await film_service.get_films(page=page, size=size)
+    total, filmlist = await film_service.get_films(page=page, size=size_default)
+    prev = f'?page={page-1}' if page > 1 else None
+    next = f'?page={page+1}' if (page - 1) * size_default + len(filmlist) < total else None
+    if total >= size_default:
+        if next:
+            size = size_default
+        else:
+            size = total - size_default * (page - 1)
+    else:
+        size = total
     return FilmList(
         total=total,
         page=page,
         size=size,
+        prev=prev,
+        next=next,
         results=[{
             "id": film.id,
             "title": film.title,
@@ -72,8 +83,8 @@ async def film_search(
         film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
     total, filmlist = await film_service.search_films(query=query, page=page, size=size_default)
-    prev = f'/search?query={query}&page={page-1}' if page > 1 else None
-    next = f'/search?query={query}&page={page+1}' if (page - 1) * size_default + len(filmlist) < total else None
+    prev = f'/films/search?query={query}&page={page-1}' if page > 1 else None
+    next = f'/films/search?query={query}&page={page+1}' if (page - 1) * size_default + len(filmlist) < total else None
     if total >= size_default:
         if next:
             size = size_default

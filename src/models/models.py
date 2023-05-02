@@ -5,7 +5,7 @@ from src.models.mixins import ORJSONMixin, TimestampedMixin, UUIDMixin
 
 class FilmShort(UUIDMixin, ORJSONMixin):
     title: str
-    imdb_rating: float
+    imdb_rating: float | None
     
 
 class Genre(UUIDMixin, ORJSONMixin):
