@@ -7,9 +7,68 @@ from redis.asyncio import Redis
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.genre import Genre
+import logging
 
 
 GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
+
+
+class GenreService:
+
+    def __init__(self, elastic: AsyncElasticsearch):
+        self.elastic = elastic
+
+    async def get_by_id(self, genre_id: str) -> Genre | None:
+        """
+        Returns information about genre by its id.
+
+        Parameters:
+            genre_id: uuid of the genre
+
+        Returns:
+            genre: Genre class object
+        """
+
+        try:
+            doc = await self.elastic.get(
+                index='genre_index', id=genre_id
+            )
+        except NotFoundError:
+            return None
+
+        genre = Genre(**doc['_source'])
+
+        return genre
+
+    async def get_list(self) -> list[Genre | None]:
+        """
+        Returns list of genres.
+
+        Returns:
+            genre_data: list of Genre objects
+        """
+
+        query = {"match_all": {}}
+        genre_data = []
+
+        try:
+            response = await self.elastic.search(
+                index='genre_index', query=query
+            )
+            results = response['hits']['hits']
+            genre_data.append(Genre(**genre['_source'])for genre in results)
+        except Exception as exc:
+            logging.exception('An error occured: %s', exc)
+        
+        return genre_data
+
+
+@lru_cache
+def get_genre_service(
+    elastic = Depends(get_elastic)
+):
+    return GenreService(elastic)
+
 
 
 # class GenreServise:
@@ -72,32 +131,32 @@ GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 #     return GenreServise(redis, elastic)
 
 
-class GenreServise:
+# class GenreServise:
 
-    def __init__(self, elastic: AsyncElasticsearch):
-        self.elastic = elastic
+#     def __init__(self, elastic: AsyncElasticsearch):
+#         self.elastic = elastic
     
-    async def get_by_id(self, genre_id: str) -> Genre | None:
-        """Get genre object by id, if not exists, return None."""
+#     async def get_by_id(self, genre_id: str) -> Genre | None:
+#         """Get genre object by id, if not exists, return None."""
 
-        genre = await self._get_genre_from_elastic(genre_id)
+#         genre = await self._get_genre_from_elastic(genre_id)
 
-        if not genre:
-            return None
+#         if not genre:
+#             return None
         
-        return genre
+#         return genre
     
-    async def _get_genre_from_elastic(self, genre_id: str) -> Genre | None:
-        """Get genre from elastic by id, if not found, return None."""
+#     async def _get_genre_from_elastic(self, genre_id: str) -> Genre | None:
+#         """Get genre from elastic by id, if not found, return None."""
 
-        try:
-            doc = await self.elastic.get(
-                index='person_index', id=genre_id
-            )
-        except NotFoundError:
-            return None
+#         try:
+#             doc = await self.elastic.get(
+#                 index='person_index', id=genre_id
+#             )
+#         except NotFoundError:
+#             return None
         
-        return Genre(**doc['_source'])
+#         return Genre(**doc['_source'])
 
     # async def _genre_from_cache(self, genre_id: str) -> Genre | None:
     #     """Trying to get genre from Redis cache, if not, return None."""
@@ -119,9 +178,3 @@ class GenreServise:
     #         ex=GENRE_CACHE_EXPIRE_IN_SECONDS
     #     )
 
-
-@lru_cache
-def get_genre_service(
-    elastic = Depends(get_elastic)
-):
-    return GenreServise(elastic)

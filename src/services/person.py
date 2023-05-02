@@ -26,10 +26,10 @@ class PersonService:
         Returns information about the person by his id.
 
         Parameters:
-            person_id: uuid of the person.
+            person_id: uuid of the person
 
         Returns:
-            person: person class object
+            person: Person class object
             movie_data: list of films
         """
 
