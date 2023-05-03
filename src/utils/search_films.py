@@ -1,5 +1,5 @@
 from elasticsearch import AsyncElasticsearch
-from models.film import PersonShortFilm
+from models.film import FilmPersonRoles
 
 
 async def get_films(elastic: AsyncElasticsearch, person_name: str) -> list:
@@ -54,7 +54,7 @@ async def get_roles(films: list, person_name: str) -> list:
             except Exception:
                 pass
 
-        obj = PersonShortFilm(uuid=film['id'], roles=roles)
+        obj = FilmPersonRoles(uuid=film['id'], roles=roles)
 
         movie_data.append(obj)
 

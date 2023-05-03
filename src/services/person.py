@@ -6,62 +6,50 @@ from redis.asyncio import Redis
 
 from db.elastic import get_elastic
 from db.redis import get_redis
-from models.person import Person
-from models.film import PersonShortFilm, PersonShortFilmInfo
+from models.person import PersonFull, PersonShort
+from models.film import FilmPersonRoles, PersonShortFilmInfo
 import json
 import logging
 from utils.search_films import get_films, get_roles
 
 
-GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
+PERSON_CACHE_EXPIRE_IN_SECONDS = 60 * 5
+
+
+INDEX_NAME = 'person_index'
 
 
 class PersonService:
 
-    def __init__(self, elastic: AsyncElasticsearch):
+    def __init__(
+        self, elastic: AsyncElasticsearch,
+        redis: Redis, index_name: str
+    ):
+        """PersonService class initializing."""
+
         self.elastic = elastic
+        self.redis = redis
+        self.index_name = index_name
+    
+    async def get_by_id(self, person_id: str) -> PersonFull | None:
+        """Returns data about the person by his id."""
 
-    async def get_by_id(self, person_id: str) -> tuple[Person | None, list]:
-        """
-        Returns information about the person by his id.
+        person = await self._person_from_cache(person_id)
 
-        Parameters:
-            person_id: uuid of the person
+        if not person:
+            person = await self._get_person_from_elastic(person_id)
 
-        Returns:
-            person: Person class object
-            movie_data: list of films
-        """
+            if not person:
+                return None
 
-        try:
-            doc = await self.elastic.get(
-                index='person_index', id=person_id
-            )
-        except NotFoundError:
-            return None
+            await self._put_person_to_cache(person)
 
-        person = doc['_source']
-        films = await get_films(self.elastic, person['full_name'])
-        movie_data = await get_roles(films, person['full_name'])
-        person = Person(**person)
+        return person
 
-        return person, movie_data
-
-    async def get_object_list(
-        self, page: int,
-        page_size: int, query: str | None
-    ) -> list | None:
-        """
-        Returns a list with information about persons.
-
-        Parameters:
-            page: page number
-            page_size: size of the page
-            query: field that is searched for
-
-        Returns:
-            data: list of persons
-        """
+    async def get_person_list(
+        self, page: int, page_size: int, query: str | None
+    ) -> list[PersonFull]:
+        """Returns a list of person data with filtering and sorting."""
 
         if query:
             query = {
@@ -71,66 +59,113 @@ class PersonService:
             }
         else:
             query = {"match_all": {}}
-
+        
         data = []
         from_page = (page - 1) * page_size
 
         try:
             response = await self.elastic.search(
-                index='person_index', query=query, from_=from_page,
+                index=self.index_name, query=query, from_=from_page,
                 size=page_size, sort=[{"id": {"order": "asc"}}]
             )
-
-            for person in response['hits']['hits']:
-                person = person['_source']
-                single_person_data = []
-                single_person_data.append(Person(**person))
-
-                films = await get_films(self.elastic, person['full_name'])
-                movie_data = await get_roles(films, person['full_name'])
-
-                single_person_data.append(movie_data)
-                data.append(single_person_data)
-
+            results = response['hits']['hits']
         except Exception as exc:
             logging.exception('An error occured: %s', exc)
+        
+        for item in results:
+            person = item['_source']
+            films = await get_films(self.elastic, person['full_name'])
+            films_roles = await get_roles(films, person['full_name'])
 
+            data.append(
+                PersonFull(
+                    id=person['id'],
+                    full_name=person['full_name'],
+                    films=[
+                        FilmPersonRoles(
+                            id=film.id,
+                            roles=film.roles,
+                        ) for film in films_roles
+                    ]
+                )
+            )
+        
         return data
 
-    async def get_films_by_person(self, person_id):
-        """
-        Get list of films where the person has participated.
-
-        Parameters:
-            person_id: uuid of the person
-
-        Returns:
-            movie_data: list of films
-        """
+    async def get_person_films_list(
+        self, person_id: str
+    ) -> list[PersonShortFilmInfo]:
+        """Data about films in which the person took part."""
 
         try:
-            doc = await self.elastic.get(
-                index='person_index', id=person_id
-            )
+            doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
         except NotFoundError:
-            return None
+            return []
 
         person = doc['_source']
         films = await get_films(self.elastic, person['full_name'])
-        movie_data = []
+        films_data = []
 
         for film in films:
 
             obj = PersonShortFilmInfo(
                 uuid=film['id'],
                 title=film['title'],
-                imdb_rating=film['imdb_rating']
+                imdb_rating=film['imdb_rating'],
             )
-            movie_data.append(obj)
+            films_data.append(obj)
+        
+        return films_data
 
-        return movie_data
+
+    async def _get_person_from_elastic(
+        self, person_id: str
+    ) -> PersonFull | None:
+        """Request to ElasticSearch to get person data."""
+
+        try:
+            doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
+        except NotFoundError:
+            return None
+
+        person = doc['_source']
+        films = await get_films(self.elastic, person['full_name'])
+        films_roles = await get_roles(films, person['full_name'])
+
+        return PersonFull(
+            id=person['id'],
+            full_name=person['full_name'],
+            films=[
+                FilmPersonRoles(
+                    id=film.id,
+                    roles=film.roles,
+                ) for film in films_roles
+            ]
+        )
+
+    async def _person_from_cache(self, person_id) -> PersonFull | None:
+        """Request to Redis to get person data from the cache."""
+
+        data = await self.redis.get(person_id)
+
+        if not data:
+            return None
+
+        return PersonFull.parse_raw(data)
+
+    async def _put_person_to_cache(self, person: PersonFull) -> None:
+        """Put person data into the Redis cache."""
+
+        await self.redis.set(
+            str(person.id),
+            person.json(),
+            PERSON_CACHE_EXPIRE_IN_SECONDS,
+        )
 
 
 @lru_cache
-def get_person_service(elastic: AsyncElasticsearch = Depends(get_elastic)):
+def get_person_service(
+    elastic: AsyncElasticsearch = Depends(get_elastic),
+    redis: Redis = Depends(get_redis)
+) -> PersonService:
     return PersonService(elastic)

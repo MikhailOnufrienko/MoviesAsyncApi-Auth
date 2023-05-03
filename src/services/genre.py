@@ -42,7 +42,7 @@ class GenreService:
 
         return genre
 
-    async def get_genre_list(self) -> list:
+    async def get_genre_list(self) -> list[Genre]:
         """Returns a list of genre data."""
 
         query = {"match_all": {}}
@@ -81,7 +81,7 @@ class GenreService:
         return Genre.parse_raw(data)
 
     async def _put_genre_to_cache(self, genre: Genre) -> None:
-        """Loading genre data into the Redis cache."""
+        """Putting genre data into the Redis cache."""
 
         await self.redis.set(
             str(genre.id),

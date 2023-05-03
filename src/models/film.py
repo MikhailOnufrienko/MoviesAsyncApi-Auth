@@ -17,12 +17,12 @@ class Film(BaseModel):
         json_dumps = orjson_dumps
 
 
-class PersonShortFilm(BaseModel):
-    uuid: str
-    roles: list
+class FilmPersonRoles(BaseModel):
+    id: str
+    roles: list[str]
 
 
 class PersonShortFilmInfo(BaseModel):
-    uuid: str
+    id: str
     title: str
     imdb_rating: float

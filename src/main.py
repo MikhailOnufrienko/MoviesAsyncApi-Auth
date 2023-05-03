@@ -5,11 +5,13 @@ from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
+from pydantic import BaseModel
 
 from api.v1 import genres, persons
 from core import config
 from core.logger import LOGGING
 from db import elastic, redis
+from models.person import PersonShort
 
 
 app = FastAPI(
@@ -44,11 +46,17 @@ app.include_router(persons.router, prefix='/api/v1/persons', tags=['persons'])
 
 
 if __name__ == '__main__':
-    uvicorn.run(
-        'main:app',
-        host='0.0.0.0',
-        port=8000,
-        log_config=LOGGING,
-        log_level=logging.DEBUG,
-    )
-
+    # uvicorn.run(
+    #     'main:app',
+    #     host='0.0.0.0',
+    #     port=8000,
+    #     log_config=LOGGING,
+    #     log_level=logging.DEBUG,
+    # )
+    # obj = PersonShort(id='123', full_name='Arthur Alty')
+    # print(obj.id, obj.full_name)
+    l = []
+    for x in [1, 2, 3]:
+        l.append(x)
+    # l.append(str(x) for x in [1, 2, 3])
+    print(l)
