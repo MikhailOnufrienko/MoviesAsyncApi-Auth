@@ -8,7 +8,7 @@ def orjson_dumps(v, *, default):
 
 
 class Genre(BaseModel):
-    uuid: str
+    id: str
     name: str
 
     class Config:
