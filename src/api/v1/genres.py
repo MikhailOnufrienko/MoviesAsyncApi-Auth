@@ -20,7 +20,7 @@ async def genre_detail(
     genre_id: str,
     genre_service: GenreService = Depends(get_genre_service)
 ) -> Genre | HTTPException:
-    """pass"""
+    """API Endpoint for genre information."""
     
     genre = await genre_service.get_by_id(genre_id)
 
@@ -35,8 +35,8 @@ async def genre_detail(
 @router.get('/')
 async def genre_list(
     genre_service: GenreService = Depends(get_genre_service)
-) -> list[Genre | None]:
-    """pass"""
+) -> list[Genre]:
+    """API Endpoint for genre list information."""
 
     genres = await genre_service.get_list()
 
