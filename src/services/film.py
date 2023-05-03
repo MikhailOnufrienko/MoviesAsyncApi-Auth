@@ -1,4 +1,5 @@
 from functools import lru_cache
+from uuid import UUID
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from elasticsearch.helpers import async_scan
@@ -21,23 +22,48 @@ class FilmService:
         self.redis = redis
         self.elastic = elastic
 
-    async def get_films(self, page: int, size: int) -> tuple[int, list[FilmShort]]:
+    async def get_films(self, page: int, size: int, genre: UUID) -> tuple[int, list[FilmShort]]:
         start_index = (page - 1) * size
         
-        search_query = {
-            "query": {
-                "match_all": {}
-            },
-            "sort": [
-                {
-                    "imdb_rating": {
-                        "order": "desc"
+        if not genre:
+            search_query = {
+                "query": {
+                    "match_all": {}
+                },
+                "sort": [
+                    {
+                        "imdb_rating": {
+                            "order": "desc"
+                        }
                     }
-                }
-            ],
-            "from": start_index,
-            "size": size
-        }
+                ],
+                "from": start_index,
+                "size": size
+            }
+        else:
+            search_query = {
+                "query": {
+                    "nested": {
+                        "path": "genre",
+                        "query": {
+                            "bool": {
+                                "filter": [
+                                    {"term": {"genre.id": genre}}
+                                ]
+                            }
+                        }
+                    }
+                },
+                "sort": [
+                    {
+                        "imdb_rating": {
+                            "order": "desc"
+                        }
+                    }
+                ],
+                "from": start_index,
+                "size": size
+            }
 
         total, films = await self._get_films_from_elastic(search_query)
         return total, films

@@ -51,9 +51,10 @@ class FilmFull(FilmShort, BaseModel):
 async def filmlist(
     page: int = 1,
     size_default: int = 20,
+    genre: UUID = None,
     film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
-    total, filmlist = await film_service.get_films(page=page, size=size_default)
+    total, filmlist = await film_service.get_films(page=page, size=size_default, genre=genre)
     prev = f'?page={page-1}' if page > 1 else None
     next = f'?page={page+1}' if (page - 1) * size_default + len(filmlist) < total else None
     if total >= size_default:
