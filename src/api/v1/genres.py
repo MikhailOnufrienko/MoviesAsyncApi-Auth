@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException
-from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 
 from services.genre import GenreService, get_genre_service
@@ -11,8 +10,12 @@ router = APIRouter()
 
 
 class Genre(BaseModel):
-    uuid: str
+    id: str
     name: str
+
+
+class GenreList(BaseModel):
+    results: list[Genre]
 
 
 @router.get('/{genre_id}', response_model=Genre)
@@ -21,7 +24,7 @@ async def genre_detail(
     genre_service: GenreService = Depends(get_genre_service)
 ) -> Genre | HTTPException:
     """API Endpoint for genre information."""
-    
+
     genre = await genre_service.get_by_id(genre_id)
 
     if not genre:
@@ -32,12 +35,17 @@ async def genre_detail(
     return Genre(id=genre.id, title=genre.title)
 
 
-@router.get('/')
+@router.get('/', response_model=GenreList)
 async def genre_list(
     genre_service: GenreService = Depends(get_genre_service)
 ) -> list[Genre]:
     """API Endpoint for genre list information."""
 
-    genres = await genre_service.get_list()
+    genres = await genre_service.get_genre_list()
 
-    return genres
+    return GenreList(
+        results=[{
+            'id': genre.id,
+            'name': genre.name,
+        } for genre in genres]
+    )
