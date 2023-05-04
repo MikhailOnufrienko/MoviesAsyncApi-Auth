@@ -24,49 +24,57 @@ class FilmService:
         self.elastic = elastic
 
     async def get_films(self, page: int, size: int, genre: UUID) -> tuple[int, list[FilmShort]]:
-        start_index = (page - 1) * size
-        
-        if not genre:
-            search_query = {
-                "query": {
-                    "match_all": {}
-                },
-                "sort": [
-                    {
-                        "imdb_rating": {
-                            "order": "desc"
-                        }
-                    }
-                ],
-                "from": start_index,
-                "size": size
-            }
-        else:
-            search_query = {
-                "query": {
-                    "nested": {
-                        "path": "genre",
-                        "query": {
-                            "bool": {
-                                "filter": [
-                                    {"term": {"genre.id": genre}}
-                                ]
+        films = await self._films_from_cache(page, size, genre)
+        if not films:
+
+            start_index = (page - 1) * size
+            
+            if not genre:
+                search_query = {
+                    "query": {
+                        "match_all": {}
+                    },
+                    "sort": [
+                        {
+                            "imdb_rating": {
+                                "order": "desc"
                             }
                         }
-                    }
-                },
-                "sort": [
-                    {
-                        "imdb_rating": {
-                            "order": "desc"
+                    ],
+                    "from": start_index,
+                    "size": size
+                }
+            else:
+                search_query = {
+                    "query": {
+                        "nested": {
+                            "path": "genre",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {"term": {"genre.id": genre}}
+                                    ]
+                                }
+                            }
                         }
-                    }
-                ],
-                "from": start_index,
-                "size": size
-            }
+                    },
+                    "sort": [
+                        {
+                            "imdb_rating": {
+                                "order": "desc"
+                            }
+                        }
+                    ],
+                    "from": start_index,
+                    "size": size
+                }
 
-        total, films = await self._get_films_from_elastic(search_query)
+            total, films = await self._get_films_from_elastic(search_query)
+            if not films:
+                return None
+            await self._put_films_to_cache(page, size, films, genre)
+            return total, films
+        total = len(films)
         return total, films
 
     async def search_films(self, query: str, page: int, size: int) -> tuple[int, list[FilmShort]]:
@@ -100,9 +108,9 @@ class FilmService:
             total, films = await self._get_films_from_elastic(search_query)
             if not films:
                 return None
-            await self._put_films_to_cache(query, page, size, films)
+            await self._put_films_to_cache(page, size, films, query=query)
+            return total, films
         total = len(films)
-        
         return total, films
 
     async def _get_films_from_elastic(self, search_query: dict) -> tuple[int, list[FilmShort]]:
@@ -143,18 +151,19 @@ class FilmService:
             return None
         return FilmFull(**doc['_source'])
 
-    async def _films_from_cache(self, query, page, size):
-        cache_key = f'films:{query}:{page}:{size}'
+    async def _films_from_cache(self, page, size, query=None, genre=None):
+        cache_key = f'films:{page}:{size}:{query}:{genre}'
         data = await self.redis.get(cache_key)
         if not data:
             return None
-        films = FilmShort.parse_raw(data)
+        films = [FilmShort.parse_raw(film) for film in data]
         return films
 
     async def _film_from_cache(self, film_id: str) -> FilmFull | None:
         # Пытаемся получить данные о фильме из кеша, используя команду get
         # https://redis.io/commands/get/
-        data = await self.redis.get(film_id)
+        cache_key = f'film:{film_id}'
+        data = await self.redis.get(cache_key)
         if not data:
             return None
 
@@ -166,14 +175,15 @@ class FilmService:
         # Выставляем время жизни кеша — 5 минут
         # https://redis.io/commands/set/
         # pydantic позволяет сериализовать модель в json
+        cache_key = f'film:{str(film.id)}'
         await self.redis.set(
-            str(film.id),
+            cache_key,
             film.json(),
             FILM_CACHE_EXPIRE_IN_SECONDS
             )
         
-    async def _put_films_to_cache(self, query, page, size, films: list[FilmShort]):
-        cache_key = f'films:{query}:{page}:{size}'
+    async def _put_films_to_cache(self, page, size, films: list[FilmShort], query=None, genre=None):
+        cache_key = f'films:{page}:{size}:{query}:{genre}'
         data = [film.json() for film in films]
         json_str = json.dumps(data)
         await self.redis.set(cache_key, json_str, FILM_CACHE_EXPIRE_IN_SECONDS)
