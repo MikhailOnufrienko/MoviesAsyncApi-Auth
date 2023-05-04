@@ -1,4 +1,5 @@
 from functools import lru_cache
+import json
 from uuid import UUID
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
@@ -69,31 +70,39 @@ class FilmService:
         return total, films
 
     async def search_films(self, query: str, page: int, size: int) -> tuple[int, list[FilmShort]]:
-        start_index = (page - 1) * size
+        
+        films = await self._films_from_cache(query, page, size)
+        if not films:
+            start_index = (page - 1) * size
 
-        search_query = {
-            "query": {
-                "match": {
-                    "title": query
-                }
-            },
-            "sort": [
-                {
-                    "_score": {
-                        "order": "desc"
+            search_query = {
+                "query": {
+                    "match": {
+                        "title": query
                     }
                 },
-                {
-                    "imdb_rating": {
-                        "order": "desc"
+                "sort": [
+                    {
+                        "_score": {
+                            "order": "desc"
+                        }
+                    },
+                    {
+                        "imdb_rating": {
+                            "order": "desc"
+                        }
                     }
-                }
-            ],
-            "from": start_index,
-            "size": size
-        }
+                ],
+                "from": start_index,
+                "size": size
+            }
 
-        total, films = await self._get_films_from_elastic(search_query)
+            total, films = await self._get_films_from_elastic(search_query)
+            if not films:
+                return None
+            await self._put_films_to_cache(query, page, size, films)
+        total = len(films)
+        
         return total, films
 
     async def _get_films_from_elastic(self, search_query: dict) -> tuple[int, list[FilmShort]]:
@@ -134,6 +143,14 @@ class FilmService:
             return None
         return FilmFull(**doc['_source'])
 
+    async def _films_from_cache(self, query, page, size):
+        cache_key = f'films:{query}:{page}:{size}'
+        data = await self.redis.get(cache_key)
+        if not data:
+            return None
+        films = FilmShort.parse_raw(data)
+        return films
+
     async def _film_from_cache(self, film_id: str) -> FilmFull | None:
         # Пытаемся получить данные о фильме из кеша, используя команду get
         # https://redis.io/commands/get/
@@ -142,15 +159,24 @@ class FilmService:
             return None
 
         # pydantic предоставляет удобное API для создания объекта моделей из json
-        film = FilmFull.parse_raw(data)
-        return film
+        return FilmFull.parse_raw(data)
 
     async def _put_film_to_cache(self, film: FilmFull):
         # Сохраняем данные о фильме, используя команду set
         # Выставляем время жизни кеша — 5 минут
         # https://redis.io/commands/set/
         # pydantic позволяет сериализовать модель в json
-        await self.redis.set(str(film.id), film.json(), FILM_CACHE_EXPIRE_IN_SECONDS)
+        await self.redis.set(
+            str(film.id),
+            film.json(),
+            FILM_CACHE_EXPIRE_IN_SECONDS
+            )
+        
+    async def _put_films_to_cache(self, query, page, size, films: list[FilmShort]):
+        cache_key = f'films:{query}:{page}:{size}'
+        data = [film.json() for film in films]
+        json_str = json.dumps(data)
+        await self.redis.set(cache_key, json_str, FILM_CACHE_EXPIRE_IN_SECONDS)
 
 
 
