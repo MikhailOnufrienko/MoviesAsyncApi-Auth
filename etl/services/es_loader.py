@@ -3,6 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch, helpers
+from elasticsearch.helpers import bulk
 
 from etl.utils.backoff_decorator import backoff
 from etl.utils.etl_logging import logger
@@ -13,7 +14,8 @@ load_dotenv()
 
 
 class ElasticsearchLoader:
-    def __init__(self, settings=es_settings):
+    def __init__(self, settings=es_settings, es):
+        self.es = es
         self.host = settings.ES_HOST
         self.port = settings.ES_PORT
         self.scheme = settings.ES_SCHEME
@@ -24,6 +26,23 @@ class ElasticsearchLoader:
         self.film_schema = self.get_schema(file_path=settings.ES_SCHEMA)
         self.genre_schema = self.get_schema(file_path=settings.ES_GENRE_SCHEMA)
         self.indexes = self.get_indexes()
+    
+    def load_persons(self, data: list, index_name: str) -> None:
+        """Loading data to ES."""
+
+        actions = []
+
+        for item in data:
+            action = {
+                '_op_type': 'update',
+                '_index': index_name,
+                '_id': item['id'],
+                'doc': item,
+                'doc_as_upsert': True
+            }
+            actions.append(action)
+
+        bulk(self.es, actions)
 
     @backoff(exception=ConnectionError)
     def get_conn_status(self):
@@ -108,5 +127,4 @@ class ElasticsearchLoader:
         )
         logger.info('Successfully transferred genres: %s,'
                 'failed to transfer: %s', success, failed)
-
 
