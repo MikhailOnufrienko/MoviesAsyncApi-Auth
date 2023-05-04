@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 
 import orjson
@@ -11,10 +10,6 @@ def orjson_dumps(v, *, default):
 
 class UUIDMixin(BaseModel):
     id: UUID
-
-
-class TimestampedMixin(BaseModel):
-    pass
 
 
 class ORJSONMixin(BaseModel):

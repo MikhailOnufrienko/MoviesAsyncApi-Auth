@@ -3,7 +3,6 @@ import json
 from uuid import UUID
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
-from elasticsearch.helpers import async_scan
 from fastapi import Depends
 from redis.asyncio import Redis
 
@@ -12,23 +11,31 @@ from db.redis import get_redis
 from models.models import FilmFull, FilmShort
 
 
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
+FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 minutes
 
 
-# FilmService содержит бизнес-логику по работе с фильмами. 
-# Никакой магии тут нет. Обычный класс с обычными методами. 
-# Этот класс ничего не знает про DI — максимально сильный и независимый.
 class FilmService:
+    """Class to represent films logic."""
+
+
     def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
         self.redis = redis
         self.elastic = elastic
 
-    async def get_films(self, page: int, size: int, genre: UUID) -> tuple[int, list[FilmShort]]:
+    async def get_films(
+            self,
+            page: int,
+            size: int,
+            genre: UUID
+    ) -> tuple[int, list[FilmShort]]:
+        """Retrieve films instances to list films
+        in accordance with filtration conditions.
+        
+        """
         films = await self._films_from_cache(page, size, genre)
-        if not films:
 
+        if not films:
             start_index = (page - 1) * size
-            
             if not genre:
                 search_query = {
                     "query": {
@@ -36,9 +43,7 @@ class FilmService:
                     },
                     "sort": [
                         {
-                            "imdb_rating": {
-                                "order": "desc"
-                            }
+                            "imdb_rating": {"order": "desc"}
                         }
                     ],
                     "from": start_index,
@@ -60,9 +65,7 @@ class FilmService:
                     },
                     "sort": [
                         {
-                            "imdb_rating": {
-                                "order": "desc"
-                            }
+                            "imdb_rating": {"order": "desc"}
                         }
                     ],
                     "from": start_index,
@@ -77,12 +80,21 @@ class FilmService:
         total = len(films)
         return total, films
 
-    async def search_films(self, query: str, page: int, size: int) -> tuple[int, list[FilmShort]]:
+    async def search_films(
+            self,
+            page: int,
+            size: int,
+            query: str
+    ) -> tuple[int, list[FilmShort]]:
+        """Retrieve films instances to list films
+        in accordance with search conditions.
         
-        films = await self._films_from_cache(query, page, size)
+        """
+        
+        films = await self._films_from_cache(page, size, query)
+        
         if not films:
             start_index = (page - 1) * size
-
             search_query = {
                 "query": {
                     "match": {
@@ -91,14 +103,10 @@ class FilmService:
                 },
                 "sort": [
                     {
-                        "_score": {
-                            "order": "desc"
-                        }
+                        "_score": {"order": "desc"}
                     },
                     {
-                        "imdb_rating": {
-                            "order": "desc"
-                        }
+                        "imdb_rating": {"order": "desc"}
                     }
                 ],
                 "from": start_index,
@@ -113,8 +121,13 @@ class FilmService:
         total = len(films)
         return total, films
 
-    async def _get_films_from_elastic(self, search_query: dict) -> tuple[int, list[FilmShort]]:
-        """Return a list of movies from Elasticsearch DB with a paginator."""
+    async def _get_films_from_elastic(
+            self,
+            search_query: dict
+        ) -> tuple[int, list[FilmShort]]:
+        """Return a list of movies from Elasticsearch DB with a paginator.
+        
+        """
 
         result = await self.elastic.search(index='movies', body=search_query)
         total = result['hits']['total']['value']
@@ -129,29 +142,36 @@ class FilmService:
             
         return total, [FilmShort(**film) for film in films]
     
-    # get_by_id возвращает объект фильма. Он опционален, так как фильм может отсутствовать в базе
     async def get_by_id(self, film_id: str) -> FilmFull | None:
-        # Пытаемся получить данные из кеша, потому что оно работает быстрее
+        """Return a film instance in accordance with ID given.
+        
+        """
         film = await self._film_from_cache(film_id)
+
         if not film:
-            # Если фильма нет в кеше, то ищем его в Elasticsearch
             film = await self._get_film_from_elastic(film_id)
             if not film:
-                # Если он отсутствует в Elasticsearch, значит, фильма вообще нет в базе
                 return None
-            # Сохраняем фильм  в кеш
             await self._put_film_to_cache(film)
-
         return film
 
     async def _get_film_from_elastic(self, film_id: str) -> FilmFull | None:
+        """Retrieve a film instance from Elasticsearch DB.
+        
+        """
         try:
             doc = await self.elastic.get(index='movies', id=film_id)
         except NotFoundError:
             return None
         return FilmFull(**doc['_source'])
 
-    async def _films_from_cache(self, page, size, query=None, genre=None):
+    async def _films_from_cache(
+            self, page: int, size: int,
+            query: str = None, genre: UUID = None
+        ):
+        """Retrieve films from Redis cache.
+        
+        """
         cache_key = f'films:{page}:{size}:{query}:{genre}'
         data = await self.redis.get(cache_key)
         if not data:
@@ -160,44 +180,42 @@ class FilmService:
         return films
 
     async def _film_from_cache(self, film_id: str) -> FilmFull | None:
-        # Пытаемся получить данные о фильме из кеша, используя команду get
-        # https://redis.io/commands/get/
+        """Retrieve a film instance from Redis cache.
+        
+        """
         cache_key = f'film:{film_id}'
         data = await self.redis.get(cache_key)
         if not data:
             return None
-
-        # pydantic предоставляет удобное API для создания объекта моделей из json
         return FilmFull.parse_raw(data)
 
     async def _put_film_to_cache(self, film: FilmFull):
-        # Сохраняем данные о фильме, используя команду set
-        # Выставляем время жизни кеша — 5 минут
-        # https://redis.io/commands/set/
-        # pydantic позволяет сериализовать модель в json
-        cache_key = f'film:{str(film.id)}'
-        await self.redis.set(
-            cache_key,
-            film.json(),
-            FILM_CACHE_EXPIRE_IN_SECONDS
-            )
+        """Save a film instance to Redis cache.
         
-    async def _put_films_to_cache(self, page, size, films: list[FilmShort], query=None, genre=None):
+        """
+        cache_key = f'film:{str(film.id)}'
+        await self.redis.set(cache_key, film.json(), FILM_CACHE_EXPIRE_IN_SECONDS)
+        
+    async def _put_films_to_cache(
+            self,
+            page: int,
+            size: int,
+            films: list[FilmShort],
+            query: str = None,
+            genre: UUID =None
+        ):
+        """Save films to Redis cache.
+        
+        """
         cache_key = f'films:{page}:{size}:{query}:{genre}'
         data = [film.json() for film in films]
         json_str = json.dumps(data)
         await self.redis.set(cache_key, json_str, FILM_CACHE_EXPIRE_IN_SECONDS)
 
 
-
-# get_film_service — это провайдер FilmService. 
-# С помощью Depends он сообщает, что ему необходимы Redis и Elasticsearch
-# Для их получения вы ранее создали функции-провайдеры в модуле db
-# Используем lru_cache-декоратор, чтобы создать объект сервиса в едином экземпляре (синглтона)
 @lru_cache()
 def get_film_service(
         redis: Redis = Depends(get_redis),
         elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmService:
     return FilmService(redis, elastic)
-
