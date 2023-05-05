@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 from pathlib import Path
+import pytz
 
 from etl.utils import models_validation
 from postgres_extractor import PostgresExtractor
@@ -8,6 +9,12 @@ from es_loader import ElasticsearchLoader
 from etl.utils.etl_logging import logger
 from etl.utils.etl_state import State, JsonFileStorage
 from etl.utils.settings import etl_settings
+from etl.services import config
+from elasticsearch import Elasticsearch
+from etl.utils.index_settings import create_es_index
+
+
+es = Elasticsearch(hosts=config.ES_HOST)
 
 
 class ETL:
@@ -24,7 +31,7 @@ class ETL:
 
         try:
             self.pg_client = PostgresExtractor()
-            self.es_client = ElasticsearchLoader()
+            self.es_client = ElasticsearchLoader(es=es)
         except Exception:
             self.state.set_state('etl_process', 'stopped')
             raise
@@ -224,6 +231,27 @@ class ETL:
                 logger.info(f'actions to transfer: {actions}')
                 self.es_client.transfer_genres(actions=actions)
                 pass
+    
+    def extract_load_persons(self):
+        """Retrieve modified and new persons data from PostgreSQL."""
+
+        tz = pytz.timezone('Europe/Moscow')
+        start_time = tz.localize(datetime.datetime.now())
+        modified_timestamp = self.states.get('persons') or datetime.min
+
+        persons = self.pg_client.get_persons(modified_timestamp)
+
+        for data in persons:
+            logger.info('Persons Data Block fetched')
+
+            try:
+                self.es_client.load_persons(data, 'person_index')
+                logger.info('Persons Data Block Loaded to ES.')
+            except Exception as exc:
+                logger.exception(exc)
+
+        if persons:
+            self.states['persons'] = str(start_time)
 
     def save_state(self):
         """Save the last ETL state.
@@ -271,8 +299,12 @@ def load_to_es():
                 etl.save_state()
             else:
                 logger.info('No genres to load into Elasticsearch.')
+            
+            etl.extract_load_persons()
 
 if __name__ == '__main__':
+    if not es.indices.exists(index='person_index'):
+        create_es_index(es, 'person_index')
     try:
         load_to_es()
     except KeyboardInterrupt:

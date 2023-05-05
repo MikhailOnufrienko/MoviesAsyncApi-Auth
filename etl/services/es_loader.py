@@ -14,7 +14,7 @@ load_dotenv()
 
 
 class ElasticsearchLoader:
-    def __init__(self, settings=es_settings, es):
+    def __init__(self, settings=es_settings, es=None):
         self.es = es
         self.host = settings.ES_HOST
         self.port = settings.ES_PORT

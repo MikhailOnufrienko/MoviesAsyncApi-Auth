@@ -81,6 +81,24 @@ class PostgresExtractor:
             ).id for filmwork in filmworks
         ]
 
+    def get_persons(self, timestamp) -> list:
+        """Return a list with persons data.
+
+        """
+        query = queries.get_persons(timestamp)
+
+        with self.conn.cursor() as curs:
+            curs.execute(query)
+
+        while True:
+            data = curs.fetchmany(size=200)
+            if not data:
+                break
+
+            yield [dict(row) for row in data]
+        
+        curs.close()
+
     def fetch_modified_persons(self, timestamp) -> list:
         """Return a list with movies' personnel modified or added anew.
 

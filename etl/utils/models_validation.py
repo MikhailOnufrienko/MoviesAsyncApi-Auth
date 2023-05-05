@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from pydantic import BaseModel
@@ -65,3 +66,8 @@ class ESFilmworkModel(UUIDMixin):
 class PGGenreAndFilmModel(UUIDMixin, ModifiedMixin):
     name: str
     description: str | None
+
+
+class PGPersonModel(BaseModel):
+    id: uuid.UUID
+    full_name: str

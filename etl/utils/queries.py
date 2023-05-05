@@ -123,3 +123,13 @@ def get_genres(timestamp) -> str:
         """.format(timestamp)
 
 
+def get_persons(timestamp) -> str:
+    """A query to get persons modified.
+
+    """
+    return """
+            SELECT p.id, p.full_name
+            FROM person p
+            WHERE p.modified > '{}'
+            ORDER BY p.modified DESC;
+        """.format(timestamp)
