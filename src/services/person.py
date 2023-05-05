@@ -6,9 +6,8 @@ from redis.asyncio import Redis
 
 from db.elastic import get_elastic
 from db.redis import get_redis
-from models.person import PersonFull, PersonShort
+from models.person import PersonFull
 from models.film import FilmPersonRoles, PersonShortFilmInfo
-import json
 import logging
 from utils.search_films import get_films, get_roles
 
@@ -30,7 +29,7 @@ class PersonService:
         self.elastic = elastic
         self.redis = redis
         self.index_name = index_name
-    
+
     async def get_by_id(self, person_id: str) -> PersonFull | None:
         """Returns data about the person by his id."""
 
@@ -59,7 +58,7 @@ class PersonService:
             }
         else:
             query = {"match_all": {}}
-        
+
         data = []
         from_page = (page - 1) * page_size
 
@@ -71,7 +70,7 @@ class PersonService:
             results = response['hits']['hits']
         except Exception as exc:
             logging.exception('An error occured: %s', exc)
-        
+
         for item in results:
             person = item['_source']
             films = await get_films(self.elastic, person['full_name'])
@@ -89,7 +88,7 @@ class PersonService:
                     ]
                 )
             )
-        
+
         return data
 
     async def get_person_films_list(
@@ -114,9 +113,8 @@ class PersonService:
                 imdb_rating=film['imdb_rating'],
             )
             films_data.append(obj)
-        
-        return films_data
 
+        return films_data
 
     async def _get_person_from_elastic(
         self, person_id: str
