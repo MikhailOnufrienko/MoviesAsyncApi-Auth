@@ -1,1 +1,71 @@
+version: '3.8'
 
+services:
+
+  etl:
+    build: etl
+    env_file:
+      - ./.env
+    restart: always
+    depends_on:
+      - db
+      - elastic_search
+      - redis
+    networks:
+      - etl_api_network
+
+  api:
+    build: src
+    env_file:
+      - ./.env
+    restart: always
+    depends_on:
+      - etl
+      # - db
+      # - elastic_search
+      # - redis
+    ports:
+      - "8000:8000"
+    networks:
+      - etl_api_network
+  
+  db:
+    image: postgres:latest
+    env_file:
+      - ./.env
+    restart: always
+    volumes:
+      - posgresql_data:/var/lib/postgresql/data/
+      - ./init-scripts:/docker-entrypoint-initdb.d/
+    networks:
+      - etl_api_network
+
+  elastic_search:
+    image: ghcr.io/yp-middle-python-24/elasticsearch:8.7.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms500m -Xmx500m"
+    ports:
+      - "9200:9200"
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    networks:
+      - etl_api_network
+
+  redis:
+    image: redis:latest
+    env_file:
+      - ./.env
+    ports:
+      - "6379:6379"
+    networks:
+      - etl_api_network
+
+volumes:
+  posgresql_data:
+
+networks:
+  etl_api_network:

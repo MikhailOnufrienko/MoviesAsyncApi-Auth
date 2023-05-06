@@ -73,7 +73,8 @@ class GenreService:
     async def _genre_from_cache(self, genre_id: str) -> Genre | None:
         """Request to Redis to get genre data from the cache."""
 
-        data = await self.redis.get(genre_id)
+        cache_key = f'genre:{genre_id}'
+        data = await self.redis.get(cache_key)
 
         if not data:
             return None
@@ -81,10 +82,12 @@ class GenreService:
         return Genre.parse_raw(data)
 
     async def _put_genre_to_cache(self, genre: Genre) -> None:
-        """Putting genre data into the Redis cache."""
+        """Put genre data into the Redis cache."""
+
+        cache_key = f'genre:{str(genre.id)}'
 
         await self.redis.set(
-            str(genre.id),
+            cache_key,
             genre.json(),
             GENRE_CACHE_EXPIRE_IN_SECONDS,
         )
@@ -93,6 +96,6 @@ class GenreService:
 @lru_cache
 def get_genre_service(
     elastic: AsyncElasticsearch = Depends(get_elastic),
-    redis: Redis = Depends(get_redis),
+    redis: Redis = Depends(get_redis)
 ) -> GenreService:
     return GenreService(elastic, redis, INDEX_NAME)

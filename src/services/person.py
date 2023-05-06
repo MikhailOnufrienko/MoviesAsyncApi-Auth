@@ -144,7 +144,8 @@ class PersonService:
     async def _person_from_cache(self, person_id) -> PersonFull | None:
         """Request to Redis to get person data from the cache."""
 
-        data = await self.redis.get(person_id)
+        cache_key = f'person:{person_id}'
+        data = await self.redis.get(cache_key)
 
         if not data:
             return None
@@ -154,8 +155,10 @@ class PersonService:
     async def _put_person_to_cache(self, person: PersonFull) -> None:
         """Put person data into the Redis cache."""
 
+        cache_key = f'person:{str(person.id)}'
+
         await self.redis.set(
-            str(person.id),
+            cache_key,
             person.json(),
             PERSON_CACHE_EXPIRE_IN_SECONDS,
         )
@@ -166,4 +169,4 @@ def get_person_service(
     elastic: AsyncElasticsearch = Depends(get_elastic),
     redis: Redis = Depends(get_redis)
 ) -> PersonService:
-    return PersonService(elastic)
+    return PersonService(elastic, redis, INDEX_NAME)

@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from logging import config as logging_config
 
-from src.core.logger import LOGGING
+# from src.core.logger import LOGGING
+from core.logger import LOGGING
 
 # Применяем настройки логирования
 logging_config.dictConfig(LOGGING)
@@ -21,4 +22,3 @@ ELASTIC_PORT = int(os.getenv('ELASTIC_PORT', 9200))
 
 # Корень проекта
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
