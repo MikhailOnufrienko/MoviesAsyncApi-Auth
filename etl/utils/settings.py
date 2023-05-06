@@ -50,6 +50,7 @@ class ETLSettings(BaseSettings):
     class Config:
         env_file = config.BASE_DIR / '.env'
 
+
 pg_settings = PGSettings()
 es_settings = ESSettings()
 etl_settings = ETLSettings()

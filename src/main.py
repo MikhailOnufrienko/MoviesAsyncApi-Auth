@@ -5,14 +5,11 @@ from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
-from pydantic import BaseModel
 
-from api.v1 import genres, persons, films
+from api.v1 import films, genres, persons
 from core import config
 from core.logger import LOGGING
 from db import elastic, redis
-from models.person import PersonShort
-
 
 app = FastAPI(
     title=config.PROJECT_NAME,
@@ -25,7 +22,13 @@ app = FastAPI(
 @app.on_event('startup')
 async def startup():
     redis.redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT)
-    elastic.es = AsyncElasticsearch(hosts=[f'{config.ELASTIC_SCHEME}://{config.ELASTIC_HOST}:{config.ELASTIC_PORT}'])
+    elastic.es = AsyncElasticsearch(
+        hosts=[
+            f'{config.ELASTIC_SCHEME}://'
+            f'{config.ELASTIC_HOST}'
+            f':{config.ELASTIC_PORT}'
+        ]
+    )
 
 
 @app.on_event('shutdown')
@@ -49,4 +52,3 @@ if __name__ == '__main__':
         log_config=LOGGING,
         log_level=logging.DEBUG,
     )
-

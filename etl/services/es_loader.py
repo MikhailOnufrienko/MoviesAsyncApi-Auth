@@ -21,7 +21,9 @@ class ElasticsearchLoader:
         self.scheme = settings.ES_SCHEME
         self.film_index_name = settings.ES_INDEX
         self.genre_index_name = settings.ES_GENRE_INDEX
-        self.client = Elasticsearch([{'scheme': self.scheme, 'host': self.host, 'port': self.port}])
+        self.client = Elasticsearch(
+            [{'scheme': self.scheme, 'host': self.host, 'port': self.port}]
+        )
         self.status = True if self.get_conn_status() else False
         self.film_schema = self.get_schema(file_path=settings.ES_SCHEMA)
         self.genre_schema = self.get_schema(file_path=settings.ES_GENRE_SCHEMA)
@@ -105,7 +107,11 @@ class ElasticsearchLoader:
         success, failed = helpers.bulk(
             client=self.client,
             actions=[
-                {'_index': self.film_index_name, '_id': action.get('id'), **action}
+                {
+                    '_index': self.film_index_name,
+                    '_id': action.get('id'),
+                    **action,
+                }
                 for action in actions
             ],
             stats_only=True
@@ -120,7 +126,11 @@ class ElasticsearchLoader:
         success, failed = helpers.bulk(
             client=self.client,
             actions=[
-                {'_index': self.genre_index_name, '_id': action.get('id'), **action}
+                {
+                    '_index': self.genre_index_name,
+                    '_id': action.get('id'),
+                    **action,
+                }
                 for action in actions
             ],
             stats_only=True
