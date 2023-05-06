@@ -1,5 +1,3 @@
-import logging
-
 import psycopg2
 from dotenv import load_dotenv
 from psycopg2 import OperationalError
@@ -65,10 +63,16 @@ class PostgresExtractor:
             query=queries.get_modified_genres(timestamp=timestamp)
         )
         if genres:
-            return [models_validation.PGGenreModel(**genre) for genre in genres]
+            return [
+                models_validation.PGGenreModel(**genre)
+                for genre in genres
+            ]
         return []
 
-    def fetch_filmworks_by_modified_genres(self, genres: list[str]) -> list[str]:
+    def fetch_filmworks_by_modified_genres(
+        self,
+        genres: list[str]
+    ) -> list[str]:
         """Return movies if corresponding genres have been modified.
 
         """
@@ -96,7 +100,7 @@ class PostgresExtractor:
                 break
 
             yield [dict(row) for row in data]
-        
+
         curs.close()
 
     def fetch_modified_persons(self, timestamp) -> list:
@@ -107,10 +111,15 @@ class PostgresExtractor:
             query=queries.get_modified_persons(timestamp=timestamp)
         )
         if persons:
-            return [models_validation.PGPersonModel(**person) for person in persons]
+            return [
+                models_validation.PGPersonModel(**person)
+                for person in persons
+            ]
         return []
 
-    def fetch_filmworks_by_modified_persons(self, persons: list[str]) -> list[str]:
+    def fetch_filmworks_by_modified_persons(
+        self, persons: list[str]
+    ) -> list[str]:
         """Return movies if corresponding personnel has been modified.
 
         """
@@ -132,7 +141,8 @@ class PostgresExtractor:
         )
         if filmworks:
             return [
-                models_validation.PGFilmworkModel(**filmwork) for filmwork in filmworks
+                models_validation.PGFilmworkModel(**filmwork)
+                for filmwork in filmworks
             ]
         return []
 
@@ -141,14 +151,21 @@ class PostgresExtractor:
 
         """
         if ids:
-            return self.execute_query(query=queries.get_filmwork_by_id(ids=ids))
+            return self.execute_query(
+                query=queries.get_filmwork_by_id(ids=ids)
+            )
         return None
 
     def fetch_genres_with_films(self, timestamp: int) -> list[tuple]:
         """Return genres' instances.
 
         """
-        genres = self.execute_query(query=queries.get_genres(timestamp=timestamp))
+        genres = self.execute_query(
+            query=queries.get_genres(timestamp=timestamp)
+        )
         if genres:
-            return [models_validation.PGGenreAndFilmModel(**genre).dict() for genre in genres]
+            return [
+                models_validation.PGGenreAndFilmModel(**genre).dict()
+                for genre in genres
+            ]
         return []

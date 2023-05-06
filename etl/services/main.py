@@ -72,16 +72,22 @@ class ETL:
         )
         if genres:
             self.states['genre'] = f'{genres[-1].modified}'
-            genre_filmwork_ids = self.pg_client.fetch_filmworks_by_modified_genres(
-                genres=[genre.id for genre in genres])
+            genre_filmwork_ids = (
+                self.pg_client.fetch_filmworks_by_modified_genres(
+                    genres=[genre.id for genre in genres]
+                )
+            )
 
         persons = self.pg_client.fetch_modified_persons(
             timestamp=modified_person
         )
         if persons:
             self.states['person'] = f'{persons[-1].modified}'
-            person_filmwork_ids = self.pg_client.fetch_filmworks_by_modified_persons(
-                persons=[person.id for person in persons])
+            person_filmwork_ids = (
+                self.pg_client.fetch_filmworks_by_modified_persons(
+                    persons=[person.id for person in persons]
+                )
+            )
 
         filmworks = self.pg_client.fetch_modified_filmworks(
             timestamp=modified_filmwork
@@ -107,16 +113,12 @@ class ETL:
         """
 
         modified_genre2: str = self.states.get('genre2') or datetime.min
-
         genres = self.pg_client.fetch_genres_with_films(
-	        timestamp=modified_genre2
+            timestamp=modified_genre2
         )
 
         if genres:
             self.states['genre2'] = f'{genres[-1]["modified"]}'
-    
-#       unique_genre_ids = [genre.id for genre in genres]
-#       genre_instances = self.pg_client.fetch_genres_by_id(ids=tuple(unique_genre_ids))
 
         return len(genres), genres
 
@@ -143,13 +145,17 @@ class ETL:
                         imdb_rating = filmwork.get('rating')
                         title = filmwork.get('title')
                         description = filmwork.get('description')
-                        genre_instance = {'id': filmwork.get('genre_id'),
-                                           'name': filmwork.get('genre')}
+                        genre_instance = {
+                            'id': filmwork.get('genre_id'),
+                            'name': filmwork.get('genre')
+                        }
                         if genre_instance not in genres:
                             genres.append(genre_instance)
                         person_name = filmwork.get('full_name')
-                        person_instance = {'id': filmwork.get('person_id'),
-                                           'name': person_name}
+                        person_instance = {
+                            'id': filmwork.get('person_id'),
+                            'name': person_name
+                        }
                         if filmwork.get('role') == 'director':
                             if person_instance not in directors:
                                 directors.append(person_instance)
@@ -231,7 +237,7 @@ class ETL:
                 logger.info(f'actions to transfer: {actions}')
                 self.es_client.transfer_genres(actions=actions)
                 pass
-    
+
     def extract_load_persons(self):
         """Retrieve modified and new persons data from PostgreSQL."""
 
@@ -275,7 +281,9 @@ def load_to_es():
             logger.info('Extracted %d modified films.', number_data)
 
             if modified_data is not None:
-                transformed_data = etl.transform_films(modified_data=modified_data)
+                transformed_data = etl.transform_films(
+                    modified_data=modified_data
+                )
                 logger.info('Starting films transfer to Elasticsearch.')
 
                 etl.load_films(transformed_data=transformed_data)
@@ -290,7 +298,9 @@ def load_to_es():
             logger.info('Extracted %d modified genres.', number_data)
 
             if modified_data is not None:
-                transformed_data = etl.transform_genres(modified_data=modified_data)
+                transformed_data = etl.transform_genres(
+                    modified_data=modified_data
+                )
                 logger.info('Starting genres transfer to Elasticsearch.')
 
                 etl.load_genres(transformed_data=transformed_data)
@@ -299,8 +309,9 @@ def load_to_es():
                 etl.save_state()
             else:
                 logger.info('No genres to load into Elasticsearch.')
-            
+
             etl.extract_load_persons()
+
 
 if __name__ == '__main__':
     if not es.indices.exists(index='person_index'):

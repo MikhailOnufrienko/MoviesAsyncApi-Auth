@@ -36,9 +36,9 @@ class ESPersonModel(UUIDMixin):
     """A model for Elasticsearch person instances."""
     name: str | None
 
+
 class ESGenreAndFilmModel(UUIDMixin):
     name: str
- #   description: str | None
 
 
 class ESFilmworkModel(UUIDMixin):
@@ -54,20 +54,11 @@ class ESFilmworkModel(UUIDMixin):
     writers: list[ESPersonModel] | None
 
 
-#class PGFilmworkShortModel(UUIDMixin):
-#    """A model to represent short info on films
-#       when displayed on a genre's page.
-#    
-#    """
-#    title: str
-#    imdb_rating: float | None
-
-
 class PGGenreAndFilmModel(UUIDMixin, ModifiedMixin):
     name: str
     description: str | None
 
 
-class PGPersonModel(BaseModel):
+class Person(BaseModel):
     id: uuid.UUID
     full_name: str

@@ -28,7 +28,7 @@ class ElasticsearchLoader:
         self.film_schema = self.get_schema(file_path=settings.ES_SCHEMA)
         self.genre_schema = self.get_schema(file_path=settings.ES_GENRE_SCHEMA)
         self.indexes = self.get_indexes()
-    
+
     def load_persons(self, data: list, index_name: str) -> None:
         """Loading data to ES."""
 
@@ -116,8 +116,12 @@ class ElasticsearchLoader:
             ],
             stats_only=True
         )
-        logger.info('Successfully transferred films: %s,'
-                'failed to transfer: %s', success, failed)
+        logger.info(
+            'Successfully transferred films: %s,'
+            'failed to transfer: %s',
+            success,
+            failed,
+        )
 
     def transfer_genres(self, actions) -> None:
         """Add data packets to Elasticsearch.
@@ -135,6 +139,9 @@ class ElasticsearchLoader:
             ],
             stats_only=True
         )
-        logger.info('Successfully transferred genres: %s,'
-                'failed to transfer: %s', success, failed)
-
+        logger.info(
+            'Successfully transferred genres: %s,'
+            'failed to transfer: %s',
+            success,
+            failed,
+        )

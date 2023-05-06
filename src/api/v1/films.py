@@ -72,7 +72,12 @@ async def filmlist(
         page=page, size=size_default, genre=genre
     )
     prev = f'/films?page={page-1}' if page > 1 else None
-    next = f'/films?page={page+1}' if (page - 1) * size_default + len(filmlist) < total else None
+    next = (
+        f'/films?page={page+1}'
+        if (page - 1) * size_default + len(filmlist) < total
+        else None
+    )
+
     if total >= size_default:
         if next:
             size = size_default

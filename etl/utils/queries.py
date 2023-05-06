@@ -106,17 +106,17 @@ def get_genres(timestamp) -> str:
 
     """
     return """
-        SELECT 
-            genre.id, 
-            genre.name, 
+        SELECT
+            genre.id,
+            genre.name,
             genre.description,
-            genre.modified, 
+            genre.modified,
             ARRAY_AGG(DISTINCT jsonb_build_object(
                 'id', film.id, 'title', film.title, 'imdb_rating', film.rating
             ))
-        FROM content.genre genre 
-        LEFT JOIN content.genre_film_work as genre_film on genre.id = genre_film.genre_id 
-        LEFT JOIN content.film_work AS film on genre_film.film_work_id = film.id 
+        FROM content.genre genre
+        LEFT JOIN content.genre_film_work as genre_film on genre.id = genre_film.genre_id
+        LEFT JOIN content.film_work AS film on genre_film.film_work_id = film.id
         WHERE genre.modified > '{}'
         GROUP BY genre.id
         ORDER by genre.modified;
