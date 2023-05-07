@@ -10,19 +10,15 @@ def orjson_dumps(v, *, default):
 
 
 class PersonShort(BaseModel):
-    id: str
-    full_name: str
+    """A model to retrieve information on a person.
 
-    class Config:
-        json_loads = orjson.loads
-        json_dumps = orjson_dumps
+    """
+    full_name: str
 
 
 class PersonFull(BaseModel):
-    id: str
+    """A model to retrieve information on a person and his roles in films.
+
+    """
     full_name: str
     films: list[FilmPersonRoles]
-
-    class Config:
-        json_loads = orjson.loads
-        json_dumps = orjson_dumps

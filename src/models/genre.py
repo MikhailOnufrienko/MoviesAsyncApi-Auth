@@ -2,15 +2,15 @@ import orjson
 
 from pydantic import BaseModel
 
+from models.mixins import UUIDMixin, ORJSONMixin
+
 
 def orjson_dumps(v, *, default):
     return orjson.dumps(v, default=default).decode()
 
 
-class Genre(BaseModel):
-    id: str
-    name: str
+class Genre(ORJSONMixin, UUIDMixin):
+    """A model to retrieve information on a genre.
 
-    class Config:
-        json_loads = orjson.loads
-        json_dumps = orjson_dumps
+    """
+    name: str
