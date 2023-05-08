@@ -24,20 +24,20 @@ async def filmlist(
     total, filmlist = await film_service.get_films(
         page=page, size=size_default, genre=genre
     )
-    prev = f'/films?page={page-1}' if page > 1 else None
-    next = (
-        f'/films?page={page+1}'
-        if (page - 1) * size_default + len(filmlist) < total
-        else None
-    )
 
-    if total >= size_default:
-        if next:
-            size = size_default
-        else:
-            size = total - size_default * (page - 1)
+    if total == 0:
+        prev = None
+        next = None
+        size = None
     else:
-        size = total
+        prev = f'/films?page={page-1}' if page > 1 else None
+        next = (
+            f'/films?page={page+1}'
+            if (page - 1) * size_default + len(filmlist) < total
+            else None
+        )
+        size = get_page_size(page, total, size_default, next)
+
     return FilmList(
         total=total,
         page=page,
@@ -47,7 +47,7 @@ async def filmlist(
         results=[{
             "id": film.id,
             "title": film.title,
-            "imdb_rating": film.imdb_rating}for film in filmlist]
+            "imdb_rating": film.imdb_rating}for film in filmlist] if total else []
     )
 
 
@@ -61,20 +61,21 @@ async def film_search(
     """Handle film search results API.
 
     """
+
     total, filmlist = await film_service.search_films(
         query=query, page=page, size=size_default
     )
-    prev = f'/films/search?query={query}&page={page-1}' if page > 1 else None
-    next = f'/films/search?query={query}&page={page+1}' if (page - 1) \
-        * size_default + len(filmlist) < total else None
 
-    if total >= size_default:
-        if next:
-            size = size_default
-        else:
-            size = total - size_default * (page - 1)
+    if total == 0:
+        prev = None
+        next = None
+        size = None
     else:
-        size = total
+        prev = f'/films/search?query={query}&page={page-1}' if page > 1 else None
+        next = f'/films/search?query={query}&page={page+1}' if (page - 1) \
+            * size_default + len(filmlist) < total else None
+
+        size = get_page_size(page, total, size_default, next)
 
     return FilmList(
         total=total,
@@ -85,7 +86,7 @@ async def film_search(
         results=[{
             "id": film.id,
             "title": film.title,
-            "imdb_rating": film.imdb_rating}for film in filmlist]
+            "imdb_rating": film.imdb_rating}for film in filmlist] if total else []
     )
 
 
@@ -113,3 +114,13 @@ async def film_details(
         writers=film.writers,
         directors=film.director,
     )
+
+
+def get_page_size(page: int, total: int, size_default: int, next: str | None) -> int:
+    
+    if total >= size_default:
+        if next:
+            return size_default
+        else:
+            return total - size_default * (page - 1)
+    return total

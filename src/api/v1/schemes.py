@@ -20,7 +20,7 @@ class FilmList(BaseModel):
     """
     total: int
     page: int
-    size: int
+    size: int | None
     prev: str | None
     next: str | None
     results: list[FilmShort]

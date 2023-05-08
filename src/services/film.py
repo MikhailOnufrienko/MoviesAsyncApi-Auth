@@ -76,7 +76,7 @@ class FilmService:
 
             total, films = await self._get_films_from_elastic(search_query)
             if not films:
-                return None
+                return 0, None
             await self._put_films_to_cache(page, size, films, genre)
             return total, films
         total = len(films)
@@ -117,7 +117,7 @@ class FilmService:
 
             total, films = await self._get_films_from_elastic(search_query)
             if not films:
-                return None
+                return 0, None
             await self._put_films_to_cache(page, size, films, query=query)
             return total, films
         total = len(films)
