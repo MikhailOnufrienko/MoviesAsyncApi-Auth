@@ -1,7 +1,5 @@
 import orjson
 
-from pydantic import BaseModel
-
 from models.mixins import UUIDMixin, ORJSONMixin
 
 

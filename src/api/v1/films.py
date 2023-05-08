@@ -14,7 +14,9 @@ router = APIRouter()
 @router.get('/', response_model=FilmList)
 async def filmlist(
     page: Annotated[int, Query(description='Pagination page', ge=1)] = 1,
-    size_default: Annotated[int, Query(description='Pagination page size', ge=1)] = 20,
+    size_default: Annotated[
+        int, Query(description='Pagination page size', ge=1)
+    ] = 20,
     genre: Annotated[UUID, Query(description='Filtration parameter')] = None,
     film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
@@ -47,7 +49,8 @@ async def filmlist(
         results=[{
             "id": film.id,
             "title": film.title,
-            "imdb_rating": film.imdb_rating}for film in filmlist] if total else []
+            "imdb_rating": film.imdb_rating
+        } for film in filmlist] if total else []
     )
 
 
@@ -55,7 +58,9 @@ async def filmlist(
 async def film_search(
         query: Annotated[str, Query(description='Query string')],
         page: Annotated[int, Query(description='Pagination page', ge=1)] = 1,
-        size_default: Annotated[int, Query(description='Pagination page size', ge=1)] = 20,
+        size_default: Annotated[
+            int, Query(description='Pagination page size', ge=1)
+        ] = 20,
         film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
     """Handle film search results API.
@@ -71,7 +76,10 @@ async def film_search(
         next = None
         size = None
     else:
-        prev = f'/films/search?query={query}&page={page-1}' if page > 1 else None
+        prev = (
+            f'/films/search?query={query}&page={page-1}'
+            if page > 1 else None
+        )
         next = f'/films/search?query={query}&page={page+1}' if (page - 1) \
             * size_default + len(filmlist) < total else None
 
@@ -86,7 +94,8 @@ async def film_search(
         results=[{
             "id": film.id,
             "title": film.title,
-            "imdb_rating": film.imdb_rating}for film in filmlist] if total else []
+            "imdb_rating": film.imdb_rating
+        } for film in filmlist] if total else []
     )
 
 
@@ -116,8 +125,13 @@ async def film_details(
     )
 
 
-def get_page_size(page: int, total: int, size_default: int, next: str | None) -> int:
-    
+def get_page_size(
+    page: int,
+    total: int,
+    size_default: int,
+    next: str | None
+) -> int:
+
     if total >= size_default:
         if next:
             return size_default

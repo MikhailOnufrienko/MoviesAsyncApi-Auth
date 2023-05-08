@@ -19,7 +19,12 @@ INDEX_NAME = 'movies'
 class FilmService:
     """Class to represent films logic."""
 
-    def __init__(self, redis: Redis, elastic: AsyncElasticsearch, index_name: str):
+    def __init__(
+        self,
+        redis: Redis,
+        elastic: AsyncElasticsearch,
+        index_name: str
+    ):
         self.redis = redis
         self.elastic = elastic
         self.index_name = index_name
@@ -131,7 +136,10 @@ class FilmService:
 
         """
 
-        result = await self.elastic.search(index=self.index_name, body=search_query)
+        result = await self.elastic.search(
+            index=self.index_name,
+            body=search_query
+        )
         total = result['hits']['total']['value']
         hits = result['hits']['hits']
 

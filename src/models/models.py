@@ -1,7 +1,7 @@
 from pydantic import Field
 
-from src.models.mixins import ORJSONMixin, UUIDMixin
-# from models.mixins import ORJSONMixin, UUIDMixin
+# from src.models.mixins import ORJSONMixin, UUIDMixin
+from models.mixins import ORJSONMixin, UUIDMixin
 
 
 class FilmShort(UUIDMixin, ORJSONMixin):

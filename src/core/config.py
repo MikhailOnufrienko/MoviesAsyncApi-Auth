@@ -3,8 +3,8 @@ from logging import config as logging_config
 
 from pydantic import BaseSettings, Field
 
-from src.core.logger import LOGGING
-# from core.logger import LOGGING
+# from src.core.logger import LOGGING
+from core.logger import LOGGING
 
 
 logging_config.dictConfig(LOGGING)
@@ -19,8 +19,9 @@ class Settings(BaseSettings):
     ELASTIC_HOST: str = Field('127.0.0.1', env='ELASTIC_HOST')
     ELASTIC_PORT: int = Field(9200, env='ELASTIC_PORT')
     PROJECT_NAME: str = Field('movies', env='PROJECT_NAME')
+
     class Config:
         env_file = '.env'
 
-settings = Settings()
 
+settings = Settings()
