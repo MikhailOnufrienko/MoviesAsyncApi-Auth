@@ -10,7 +10,7 @@ INDEX_SETTINGS = {
             'id': {
                 'type': 'keyword'
             },
-            'title': {
+            'full_name': {
                 'type': 'text',
             },
         }
