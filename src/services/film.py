@@ -13,13 +13,16 @@ from models.models import FilmFull, FilmShort
 
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 minutes
 
+INDEX_NAME = 'movies'
+
 
 class FilmService:
     """Class to represent films logic."""
 
-    def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
+    def __init__(self, redis: Redis, elastic: AsyncElasticsearch, index_name: str):
         self.redis = redis
         self.elastic = elastic
+        self.index_name = index_name
 
     async def get_films(
             self,
@@ -128,7 +131,7 @@ class FilmService:
 
         """
 
-        result = await self.elastic.search(index='movies', body=search_query)
+        result = await self.elastic.search(index=self.index_name, body=search_query)
         total = result['hits']['total']['value']
         hits = result['hits']['hits']
 
@@ -159,7 +162,7 @@ class FilmService:
 
         """
         try:
-            doc = await self.elastic.get(index='movies', id=film_id)
+            doc = await self.elastic.get(index=self.index_name, id=film_id)
         except NotFoundError:
             return None
         return FilmFull(**doc['_source'])
@@ -175,6 +178,7 @@ class FilmService:
         data = await self.redis.get(cache_key)
         if not data:
             return None
+        print(type(data))
         films = [FilmShort.parse_raw(film) for film in data]
         return films
 
@@ -222,4 +226,4 @@ def get_film_service(
         redis: Redis = Depends(get_redis),
         elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmService:
-    return FilmService(redis, elastic)
+    return FilmService(redis, elastic, INDEX_NAME)
