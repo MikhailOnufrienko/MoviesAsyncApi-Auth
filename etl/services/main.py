@@ -242,7 +242,7 @@ class ETL:
         """Retrieve modified and new persons data from PostgreSQL."""
 
         tz = pytz.timezone('Europe/Moscow')
-        start_time = tz.localize(datetime.datetime.now())
+        start_time = tz.localize(datetime.now())
         modified_timestamp = self.states.get('persons') or datetime.min
 
         persons = self.pg_client.get_persons(modified_timestamp)
