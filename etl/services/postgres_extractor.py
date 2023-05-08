@@ -94,12 +94,12 @@ class PostgresExtractor:
         with self.conn.cursor() as curs:
             curs.execute(query)
 
-        while True:
-            data = curs.fetchmany(size=200)
-            if not data:
-                break
+            while True:
+                data = curs.fetchmany(size=200)
+                if not data:
+                    break
 
-            yield [dict(row) for row in data]
+                yield [dict(row) for row in data]
 
         curs.close()
 

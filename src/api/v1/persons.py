@@ -1,45 +1,22 @@
 from http import HTTPStatus
+from typing import Annotated
 
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from services.person import PersonService, get_person_service
+from src.api.v1.schemes import (FilmPersonRoles, Person, PersonList,
+                     PersonShortFilmInfo, PersonShortFilmInfoList)
 
 
 router = APIRouter()
 
 
-class FilmPersonRoles(BaseModel):
-    id: str
-    roles: list[str]
-
-
-class PersonShortFilmInfo(BaseModel):
-    id: str
-    title: str
-    imdb_rating: float
-
-
-class PersonShortFilmInfoList(BaseModel):
-    results: list[PersonShortFilmInfo]
-
-
-class Person(BaseModel):
-    id: str
-    full_name: str
-    films: list[FilmPersonRoles]
-
-
-class PersonList(BaseModel):
-    results: list[Person]
-
-
 @router.get('/search')
 async def person_list_search(
     person_service: PersonService = Depends(get_person_service),
-    page: int = 1,
-    page_size: int = 10,
+    page: Annotated[int, Query(description='Pagination page', ge=1)] = 1,
+    page_size: Annotated[int, Query(description='Pagination page size', ge=1)] = 10,
     query: str | None = None
 ) -> list[Person]:
     """API Endpoint for a list of persons and their roles in films."""
