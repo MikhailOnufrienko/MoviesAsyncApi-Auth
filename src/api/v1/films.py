@@ -1,8 +1,9 @@
 from http import HTTPStatus
+from typing import Annotated
 from uuid import UUID
 
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from services.film import FilmService, get_film_service
 from src.api.v1.schemes import FilmFull, FilmList
@@ -12,9 +13,9 @@ router = APIRouter()
 
 @router.get('/', response_model=FilmList)
 async def filmlist(
-    page: int = 1,
-    size_default: int = 20,
-    genre: UUID = None,
+    page: Annotated[int, Query(description='Pagination page', ge=1)] = 1,
+    size_default: Annotated[int, Query(description='Pagination page size', ge=1)] = 20,
+    genre: Annotated[UUID, Query(description='Filtration parameter')] = None,
     film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
     """Handle list of films API.
@@ -52,9 +53,9 @@ async def filmlist(
 
 @router.get('/search', response_model=FilmList)
 async def film_search(
-        query: str,
-        page: int = 1,
-        size_default: int = 20,
+        query: Annotated[str, Query(description='Query string')],
+        page: Annotated[int, Query(description='Pagination page', ge=1)] = 1,
+        size_default: Annotated[int, Query(description='Pagination page size', ge=1)] = 20,
         film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
     """Handle film search results API.

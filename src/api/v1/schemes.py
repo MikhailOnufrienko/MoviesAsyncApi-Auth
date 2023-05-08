@@ -34,7 +34,7 @@ class GenreInFilm(BaseModel):
     name: str
 
 
-class Person(BaseModel):
+class PersonInFilm(BaseModel):
     """An API model to represent person information within FilmFull class.
 
     """
@@ -48,9 +48,9 @@ class FilmFull(FilmShort, BaseModel):
     """
     description: str | None
     genres: list[GenreInFilm] | None = Field(default=[])
-    actors: list[Person] | None = Field(default=[])
-    writers: list[Person] | None = Field(default=[])
-    directors: list[Person] | None = Field(default=[])
+    actors: list[PersonInFilm] | None = Field(default=[])
+    writers: list[PersonInFilm] | None = Field(default=[])
+    directors: list[PersonInFilm] | None = Field(default=[])
 
 
 class Genre(BaseModel):
