@@ -2,37 +2,13 @@ from http import HTTPStatus
 
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 
 from services.person import PersonService, get_person_service
+from src.api.v1.schemes import (FilmPersonRoles, Person, PersonList,
+                     PersonShortFilmInfo, PersonShortFilmInfoList)
 
 
 router = APIRouter()
-
-
-class FilmPersonRoles(BaseModel):
-    id: str
-    roles: list[str]
-
-
-class PersonShortFilmInfo(BaseModel):
-    id: str
-    title: str
-    imdb_rating: float
-
-
-class PersonShortFilmInfoList(BaseModel):
-    results: list[PersonShortFilmInfo]
-
-
-class Person(BaseModel):
-    id: str
-    full_name: str
-    films: list[FilmPersonRoles]
-
-
-class PersonList(BaseModel):
-    results: list[Person]
 
 
 @router.get('/search')

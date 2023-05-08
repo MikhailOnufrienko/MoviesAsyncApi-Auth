@@ -3,59 +3,11 @@ from uuid import UUID
 
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
 
 from services.film import FilmService, get_film_service
+from src.api.v1.schemes import FilmFull, FilmList
 
 router = APIRouter()
-
-
-class FilmShort(BaseModel):
-    """An API model to represent brief film information.
-
-    """
-    id: UUID
-    title: str
-    imdb_rating: float | None
-
-
-class FilmList(BaseModel):
-    """An API model to represent a list of films with a paginator.
-
-    """
-    total: int
-    page: int
-    size: int
-    prev: str | None
-    next: str | None
-    results: list[FilmShort]
-
-
-class Genre(BaseModel):
-    """An API model to represent genre information within FilmFull class.
-
-    """
-    id: UUID
-    name: str
-
-
-class Person(BaseModel):
-    """An API model to represent person information within FilmFull class.
-
-    """
-    id: UUID
-    name: str | None
-
-
-class FilmFull(FilmShort, BaseModel):
-    """An API model to represent detailed information on a film.
-
-    """
-    description: str | None
-    genres: list[Genre] | None = Field(default=[])
-    actors: list[Person] | None = Field(default=[])
-    writers: list[Person] | None = Field(default=[])
-    directors: list[Person] | None = Field(default=[])
 
 
 @router.get('/', response_model=FilmList)
