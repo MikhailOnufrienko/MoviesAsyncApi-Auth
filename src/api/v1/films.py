@@ -3,28 +3,41 @@ from typing import Annotated
 from uuid import UUID
 
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Path
 
 from src.services.film import FilmService, get_film_service
 from src.api.v1.schemes import FilmFull, FilmList
+from src.utils.constants import FILM_NOT_FOUND
 
 router = APIRouter()
 
 
-@router.get('/', response_model=FilmList)
+@router.get(
+    '/',
+    response_model=FilmList,
+    summary='List of films'
+)
 async def filmlist(
     page_number: Annotated[
-        int, Query(description='Pagination page', ge=1)
+        int, Query(description='Pagination page number', ge=1)
     ] = 1,
     page_size: Annotated[
         int, Query(description='Pagination page size', ge=1)
     ] = 20,
-    genre: Annotated[UUID, Query(description='Filtration parameter')] = None,
+    genre: Annotated[UUID, Query(description='Search by genre id')] = None,
     film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
-    """Handle list of films API.
-
     """
+    Return list of films with parameters:
+    
+    - **total**: total number of all films in database
+    - **page**: current page number
+    - **size**: size of page
+    - **prev**: link to previous page
+    - **next**: link to next page
+    - **results**: list of film information
+    """
+
     total, filmlist = await film_service.get_films(
         page=page_number, size=page_size, genre=genre
     )
@@ -56,19 +69,26 @@ async def filmlist(
     )
 
 
-@router.get('/search', response_model=FilmList)
+@router.get('/search', response_model=FilmList, summary='Film search')
 async def film_search(
-        query: Annotated[str, Query(description='Query string')],
+        query: Annotated[str, Query(description='Film search query')],
         page_number: Annotated[
-            int, Query(description='Pagination page', ge=1)
+            int, Query(description='Pagination page number', ge=1)
         ] = 1,
         page_size: Annotated[
             int, Query(description='Pagination page size', ge=1)
         ] = 20,
         film_service: FilmService = Depends(get_film_service)
 ) -> FilmList:
-    """Handle film search results API.
-
+    """
+    Return list of films by query:
+    
+    - **total**: total number of all films in database
+    - **page**: current page number
+    - **size**: size of page
+    - **prev**: link to previous page
+    - **next**: link to next page
+    - **results**: list of film information
     """
 
     total, filmlist = await film_service.search_films(
@@ -105,19 +125,26 @@ async def film_search(
     )
 
 
-@router.get('/{film_id}', response_model=FilmFull)
+@router.get('/{film_id}', response_model=FilmFull, summary='Film detail')
 async def film_details(
     film_id: str,
     film_service: FilmService = Depends(get_film_service)
 ) -> FilmFull:
-    """Handle film detailed information API.
-
     """
+    Return film information:
+
+    - **description**: film description
+    - **genres**: list of film genres
+    - **actors**: list of film actors
+    - **writers**: list of film writers
+    - **directors**: film directors
+    """
+
     film = await film_service.get_by_id(film_id)
     if not film:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='film not found'
+            detail=FILM_NOT_FOUND
         )
     return FilmFull(
         id=film.id,

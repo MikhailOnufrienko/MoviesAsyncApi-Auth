@@ -7,12 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from src.services.person import PersonService, get_person_service
 from src.api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
                                 PersonShortFilmInfoList)
+from src.utils.constants import PERSON_NOT_FOUND
 
 
 router = APIRouter()
 
 
-@router.get('/search')
+@router.get('/search', response_model=PersonList, summary='Person lsit')
 async def person_list_search(
     person_service: PersonService = Depends(get_person_service),
     page_number: Annotated[
@@ -23,7 +24,11 @@ async def person_list_search(
     ] = 10,
     query: str | None = None
 ) -> PersonList:
-    """API Endpoint for a list of persons and their roles in films."""
+    """
+    Return person list by query:
+
+    - **results**: list of persons
+    """
 
     objects = await person_service.get_person_list(
         page_number,
@@ -42,18 +47,24 @@ async def person_list_search(
     )
 
 
-@router.get('/{person_id}', response_model=Person)
+@router.get('/{person_id}', response_model=Person, summary='Person detail')
 async def person_detail(
     person_id: str,
     person_service: PersonService = Depends(get_person_service)
 ) -> Person | HTTPException:
-    """API Endpoint to retrieve information about a person by his id."""
+    """
+    Return person information:
+
+    - **id**: genre id
+    - **full_name**: Person's full name
+    - **films**: list of films and the person's roles
+    """
 
     person = await person_service.get_by_id(person_id)
 
     if not person:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='person not found'
+            status_code=HTTPStatus.NOT_FOUND, detail=PERSON_NOT_FOUND
         )
 
     return Person(
@@ -63,14 +74,19 @@ async def person_detail(
     )
 
 
-@router.get('/{person_id}/film')
+@router.get(
+    '/{person_id}/film',
+    response_model=PersonShortFilmInfoList,
+    summary='List of person\'s films'
+)
 async def person_films_detail(
     person_id: str,
     person_service: PersonService = Depends(get_person_service)
 ) -> PersonShortFilmInfoList:
     """
-    API Endpoint to get information about films
-    in which the person was involved.
+    Return list of films in which the person participated:
+
+    - **results**: list of films
     """
 
     films = await person_service.get_person_films_list(person_id)
