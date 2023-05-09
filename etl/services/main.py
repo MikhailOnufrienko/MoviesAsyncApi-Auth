@@ -1,18 +1,18 @@
 import time
 from datetime import datetime
 from pathlib import Path
-import pytz
 
-from etl.services.postgres_extractor import PostgresExtractor
+import pytz
+from elasticsearch import Elasticsearch
+
+from etl.services import config
 from etl.services.es_loader import ElasticsearchLoader
+from etl.services.postgres_extractor import PostgresExtractor
 from etl.utils import models_validation
 from etl.utils.etl_logging import logger
-from etl.utils.etl_state import State, JsonFileStorage
-from etl.utils.settings import etl_settings
-from etl.services import config
-from elasticsearch import Elasticsearch
+from etl.utils.etl_state import JsonFileStorage, State
 from etl.utils.index_settings import create_es_index
-
+from etl.utils.settings import etl_settings
 
 es = Elasticsearch(hosts=config.ES_HOST)
 

@@ -1,14 +1,12 @@
 from http import HTTPStatus
 from typing import Annotated
 
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.services.person import PersonService, get_person_service
 from src.api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
                                 PersonShortFilmInfoList)
+from src.services.person import PersonService, get_person_service
 from src.utils.constants import PERSON_NOT_FOUND
-
 
 router = APIRouter()
 

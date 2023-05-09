@@ -9,7 +9,6 @@ from etl.utils.backoff_decorator import backoff
 from etl.utils.etl_logging import logger
 from etl.utils.settings import es_settings
 
-
 load_dotenv()
 
 

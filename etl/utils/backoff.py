@@ -2,7 +2,7 @@ import logging
 import time
 from functools import wraps
 
-from utils.logging_settings import setup_logging
+from etl.utils.logging_settings import setup_logging
 
 setup_logging()
 

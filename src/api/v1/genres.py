@@ -3,10 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.services.genre import GenreService, get_genre_service
 from src.api.v1.schemes import Genre, GenreList
+from src.services.genre import GenreService, get_genre_service
 from src.utils.constants import GENRE_NOT_FOUND
-
 
 router = APIRouter()
 

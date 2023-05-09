@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
@@ -6,11 +7,9 @@ from redis.asyncio import Redis
 
 from src.db.elastic import get_elastic
 from src.db.redis import get_redis
-from src.models.person import PersonFull
 from src.models.film import FilmPersonRoles, PersonShortFilmInfo
-import logging
+from src.models.person import PersonFull
 from src.utils.search_films import get_films, get_roles
-
 
 PERSON_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 

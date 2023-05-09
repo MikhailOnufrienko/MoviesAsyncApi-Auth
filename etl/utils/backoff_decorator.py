@@ -3,7 +3,6 @@ import time
 from functools import wraps
 from typing import Callable
 
-
 logger = logging.getLogger(__name__)
 
 

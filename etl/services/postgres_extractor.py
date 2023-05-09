@@ -4,12 +4,10 @@ from psycopg2 import OperationalError
 from psycopg2.extensions import connection
 from psycopg2.extras import DictCursor
 
-from etl.utils import models_validation
-from etl.utils import queries
+from etl.utils import models_validation, queries
 from etl.utils.backoff_decorator import backoff
 from etl.utils.etl_logging import logger
-from etl.utils.settings import pg_settings, etl_settings
-
+from etl.utils.settings import etl_settings, pg_settings
 
 load_dotenv()
 

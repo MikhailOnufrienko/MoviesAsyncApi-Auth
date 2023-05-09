@@ -2,11 +2,10 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
-
-from src.services.film import FilmService, get_film_service
 from src.api.v1.schemes import FilmFull, FilmList
+from src.services.film import FilmService, get_film_service
 from src.utils.constants import FILM_NOT_FOUND
 
 router = APIRouter()
@@ -29,7 +28,7 @@ async def filmlist(
 ) -> FilmList:
     """
     Return list of films with parameters:
-    
+
     - **total**: total number of all films in database
     - **page**: current page number
     - **size**: size of page
@@ -82,7 +81,7 @@ async def film_search(
 ) -> FilmList:
     """
     Return list of films by query:
-    
+
     - **total**: total number of all films in database
     - **page**: current page number
     - **size**: size of page

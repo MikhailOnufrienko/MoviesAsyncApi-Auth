@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
@@ -7,8 +8,6 @@ from redis.asyncio import Redis
 from src.db.elastic import get_elastic
 from src.db.redis import get_redis
 from src.models.genre import Genre
-import logging
-
 
 GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 

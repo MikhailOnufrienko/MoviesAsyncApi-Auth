@@ -1,5 +1,5 @@
-from functools import lru_cache
 import json
+from functools import lru_cache
 from uuid import UUID
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
@@ -9,7 +9,6 @@ from redis.asyncio import Redis
 from src.db.elastic import get_elastic
 from src.db.redis import get_redis
 from src.models.models import FilmFull, FilmShort
-
 
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 minutes
 
