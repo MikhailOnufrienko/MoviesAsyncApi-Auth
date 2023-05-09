@@ -1,6 +1,6 @@
 from redis.asyncio import Redis
 
-redis: Redis = None
+redis: Redis = Redis()
 
 
 # Функция понадобится при внедрении зависимостей

@@ -7,6 +7,9 @@ from src.core import config
 load_dotenv()
 
 
+conf = config.Settings()
+
+
 class PGSettings(BaseSettings):
     """Settings for PostgreSQL database.
 
@@ -14,6 +17,9 @@ class PGSettings(BaseSettings):
     DB_NAME: str
     DB_USER: str
     DB_PASSWORD: str
+    # POSTGRES_DB: str
+    # POSTGRES_USER: str
+    # POSTGRES_PASSWORD: str
     DB_HOST: str = 'localhost'
     DB_PORT: int = 5432
     DB_OPTIONS: str = '-c search_path=content'
@@ -26,9 +32,9 @@ class ESSettings(BaseSettings):
     """Settings for Elasticsearch database.
 
     """
-    ES_SCHEME: str = config.ELASTIC_PORT
-    ES_HOST: str = config.ELASTIC_HOST
-    ES_PORT: int = config.ELASTIC_PORT
+    ES_SCHEME: str = conf.ELASTIC_PORT
+    ES_HOST: str = conf.ELASTIC_HOST
+    ES_PORT: int = conf.ELASTIC_PORT
     ES_INDEX: str
     ES_GENRE_INDEX: str
     ES_SCHEMA: str

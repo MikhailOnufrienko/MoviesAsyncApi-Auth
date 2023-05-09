@@ -1,5 +1,5 @@
 from elasticsearch import AsyncElasticsearch
-from models.film import FilmPersonRoles
+from src.models.film import FilmPersonRoles
 
 
 async def get_films(elastic: AsyncElasticsearch, person_name: str) -> list:
@@ -27,7 +27,7 @@ async def get_films(elastic: AsyncElasticsearch, person_name: str) -> list:
         }
     }
 
-    films = await elastic.search(index="movies_index", query=query_movies)
+    films = await elastic.search(index="movies", query=query_movies)
 
     movie_data = [film['_source'] for film in films['hits']['hits']]
 
@@ -54,7 +54,7 @@ async def get_roles(films: list, person_name: str) -> list:
             except Exception:
                 pass
 
-        obj = FilmPersonRoles(uuid=film['id'], roles=roles)
+        obj = FilmPersonRoles(id=film['id'], roles=roles)
 
         movie_data.append(obj)
 

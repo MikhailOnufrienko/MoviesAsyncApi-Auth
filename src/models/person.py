@@ -1,7 +1,7 @@
 import orjson
 
-from models.film import FilmPersonRoles
-from models.mixins import UUIDMixin, ORJSONMixin
+from src.models.film import FilmPersonRoles
+from src.models.mixins import UUIDMixin, ORJSONMixin
 
 
 def orjson_dumps(v, *, default):

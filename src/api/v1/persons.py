@@ -4,9 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from services.person import PersonService, get_person_service
-from src.api.v1.schemes import (FilmPersonRoles, Person, PersonList,
-                                PersonShortFilmInfo, PersonShortFilmInfoList)
+from src.services.person import PersonService, get_person_service
+from src.api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
+                                PersonShortFilmInfoList)
 
 
 router = APIRouter()
@@ -15,17 +15,21 @@ router = APIRouter()
 @router.get('/search')
 async def person_list_search(
     person_service: PersonService = Depends(get_person_service),
-    page: Annotated[
-        int, Query(description='Pagination page', ge=1)
+    page_number: Annotated[
+        int, Query(description='Pagination page number', ge=1)
     ] = 1,
     page_size: Annotated[
         int, Query(description='Pagination page size', ge=1)
     ] = 10,
     query: str | None = None
-) -> list[Person]:
+) -> PersonList:
     """API Endpoint for a list of persons and their roles in films."""
 
-    objects = await person_service.get_person_list(page, page_size, query)
+    objects = await person_service.get_person_list(
+        page_number,
+        page_size,
+        query
+    )
 
     return PersonList(
         results=[
@@ -63,7 +67,7 @@ async def person_detail(
 async def person_films_detail(
     person_id: str,
     person_service: PersonService = Depends(get_person_service)
-) -> list[FilmPersonRoles]:
+) -> PersonShortFilmInfoList:
     """
     API Endpoint to get information about films
     in which the person was involved.

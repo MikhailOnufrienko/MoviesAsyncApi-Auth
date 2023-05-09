@@ -4,12 +4,12 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from db.elastic import get_elastic
-from db.redis import get_redis
-from models.person import PersonFull
-from models.film import FilmPersonRoles, PersonShortFilmInfo
+from src.db.elastic import get_elastic
+from src.db.redis import get_redis
+from src.models.person import PersonFull
+from src.models.film import FilmPersonRoles, PersonShortFilmInfo
 import logging
-from utils.search_films import get_films, get_roles
+from src.utils.search_films import get_films, get_roles
 
 
 PERSON_CACHE_EXPIRE_IN_SECONDS = 60 * 5
@@ -108,7 +108,7 @@ class PersonService:
         for film in films:
 
             obj = PersonShortFilmInfo(
-                uuid=film['id'],
+                id=film['id'],
                 title=film['title'],
                 imdb_rating=film['imdb_rating'],
             )

@@ -3,8 +3,8 @@ from logging import config as logging_config
 
 from pydantic import BaseSettings, Field
 
-# from src.core.logger import LOGGING
-from core.logger import LOGGING
+from src.core.logger import LOGGING
+# from core.logger import LOGGING
 
 
 logging_config.dictConfig(LOGGING)

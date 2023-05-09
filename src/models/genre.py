@@ -1,6 +1,6 @@
 import orjson
 
-from models.mixins import UUIDMixin, ORJSONMixin
+from src.models.mixins import UUIDMixin, ORJSONMixin
 
 
 def orjson_dumps(v, *, default):

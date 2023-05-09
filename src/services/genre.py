@@ -4,15 +4,15 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from db.elastic import get_elastic
-from db.redis import get_redis
-from models.genre import Genre
+from src.db.elastic import get_elastic
+from src.db.redis import get_redis
+from src.models.genre import Genre
 import logging
 
 
 GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
-INDEX_NAME = 'genre_index'
+INDEX_NAME = 'genres'
 
 
 class GenreService:
@@ -42,19 +42,29 @@ class GenreService:
 
         return genre
 
-    async def get_genre_list(self) -> list[Genre]:
+    async def get_genre_list(self, page: int, page_size: int) -> list[Genre]:
         """Returns a list of genre data."""
 
         query = {"match_all": {}}
         genre_data = []
+        from_page = (page - 1) * page_size
 
         try:
             response = await self.elastic.search(
-                index=self.index_name,
-                query=query,
+                index=self.index_name, from_=from_page,
+                size=page_size, query=query
             )
             results = response['hits']['hits']
-            genre_data.append(Genre(**genre['_source']) for genre in results)
+
+            for item in results:
+                genre = item['_source']
+                genre_data.append(
+                    Genre(
+                        id=genre['id'],
+                        name=genre['name'],
+                    )
+                )
+
         except Exception as exc:
             logging.exception('An error occured: %s', exc)
 

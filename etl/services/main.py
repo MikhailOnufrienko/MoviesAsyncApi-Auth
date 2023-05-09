@@ -3,9 +3,9 @@ from datetime import datetime
 from pathlib import Path
 import pytz
 
+from etl.services.postgres_extractor import PostgresExtractor
+from etl.services.es_loader import ElasticsearchLoader
 from etl.utils import models_validation
-from postgres_extractor import PostgresExtractor
-from es_loader import ElasticsearchLoader
 from etl.utils.etl_logging import logger
 from etl.utils.etl_state import State, JsonFileStorage
 from etl.utils.settings import etl_settings
