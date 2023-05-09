@@ -1,3 +1,3 @@
-ES_HOST = 'http://localhost:9200/'
+ES_HOST = 'http://elastic_search:9200/'
 
 SLEEP_TIME = 20
