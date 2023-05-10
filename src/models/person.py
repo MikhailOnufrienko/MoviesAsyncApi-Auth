@@ -1,11 +1,5 @@
-import orjson
-
 from src.models.film import FilmPersonRoles
 from src.models.mixins import UUIDMixin, ORJSONMixin
-
-
-def orjson_dumps(v, *, default):
-    return orjson.dumps(v, default=default).decode()
 
 
 class PersonShort(ORJSONMixin, UUIDMixin):
