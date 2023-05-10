@@ -15,12 +15,12 @@ load_dotenv()
 class PostgresConnector:
     def __init__(self, settings=pg_settings):
         self.dsn: dict = {
-            # 'dbname': settings.POSTGRES_DB,
-            # 'user': settings.POSTGRES_USER,
-            # 'password': settings.POSTGRES_PASSWORD,
-            'dbname': settings.DB_NAME,
-            'user': settings.DB_USER,
-            'password': settings.DB_PASSWORD,
+            'dbname': settings.POSTGRES_DB,
+            'user': settings.POSTGRES_USER,
+            'password': settings.POSTGRES_PASSWORD,
+            # 'dbname': settings.DB_NAME,
+            # 'user': settings.DB_USER,
+            # 'password': settings.DB_PASSWORD,
             'host': settings.DB_HOST,
             'port': settings.DB_PORT,
             'options': settings.DB_OPTIONS

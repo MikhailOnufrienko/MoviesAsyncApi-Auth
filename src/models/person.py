@@ -1,5 +1,5 @@
-from src.models.film import FilmPersonRoles
-from src.models.mixins import UUIDMixin, ORJSONMixin
+from models.film import FilmPersonRoles
+from models.mixins import UUIDMixin, ORJSONMixin
 
 
 class PersonShort(ORJSONMixin, UUIDMixin):

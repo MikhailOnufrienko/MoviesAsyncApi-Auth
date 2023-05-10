@@ -3,10 +3,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
+from api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
                                 PersonShortFilmInfoList)
-from src.services.person import PersonService, get_person_service
-from src.utils.constants import PERSON_NOT_FOUND
+from services.person import PersonService, get_person_service
+from utils.constants import PERSON_NOT_FOUND
 
 router = APIRouter()
 

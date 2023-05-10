@@ -5,11 +5,11 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from src.db.elastic import get_elastic
-from src.db.redis import get_redis
-from src.models.film import FilmPersonRoles, PersonShortFilmInfo
-from src.models.person import PersonFull
-from src.utils.search_films import get_films, get_roles
+from db.elastic import get_elastic
+from db.redis import get_redis
+from models.film import FilmPersonRoles, PersonShortFilmInfo
+from models.person import PersonFull
+from utils.search_films import get_films, get_roles
 
 PERSON_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 

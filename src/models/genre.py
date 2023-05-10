@@ -1,4 +1,4 @@
-from src.models.mixins import UUIDMixin, ORJSONMixin
+from models.mixins import UUIDMixin, ORJSONMixin
 
 
 class Genre(ORJSONMixin, UUIDMixin):

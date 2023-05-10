@@ -1,6 +1,6 @@
 from elasticsearch import AsyncElasticsearch
 
-from src.models.film import FilmPersonRoles
+from models.film import FilmPersonRoles
 
 
 async def get_films(elastic: AsyncElasticsearch, person_name: str) -> list:

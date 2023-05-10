@@ -4,7 +4,6 @@ services:
 
   etl:
     build: etl
-    restart: always
     depends_on:
       - db
       - elastic_search
@@ -16,7 +15,6 @@ services:
 
   api:
     build: src
-    restart: always
     depends_on:
       - etl
     env_file:
@@ -40,8 +38,8 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms500m -Xmx500m"
-    expose:
-      - "9200"
+    ports:
+      - "9200:9200"
     depends_on:
       - db
     env_file:

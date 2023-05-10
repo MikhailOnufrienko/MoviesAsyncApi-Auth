@@ -14,12 +14,12 @@ class PGSettings(BaseSettings):
     """Settings for PostgreSQL database.
 
     """
-    DB_NAME: str
-    DB_USER: str
-    DB_PASSWORD: str
-    # POSTGRES_DB: str
-    # POSTGRES_USER: str
-    # POSTGRES_PASSWORD: str
+    # DB_NAME: str
+    # DB_USER: str
+    # DB_PASSWORD: str
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
     DB_HOST: str = 'localhost'
     DB_PORT: int = 5432
     DB_OPTIONS: str = '-c search_path=content'
