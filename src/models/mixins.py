@@ -9,7 +9,7 @@ def orjson_dumps(v, *, default):
 
 
 class UUIDMixin(BaseModel):
-    id: UUID
+    id: str
 
 
 class ORJSONMixin(BaseModel):

@@ -183,10 +183,13 @@ class FilmService:
         """
         cache_key = f'films:{page}:{size}:{query}:{genre}'
         data = await self.redis.get(cache_key)
+
         if not data:
             return None
-        print(type(data))
-        films = [FilmShort.parse_raw(film) for film in data]
+
+        films_list = json.loads(data)
+        films = [FilmShort.parse_raw(film) for film in films_list]
+
         return films
 
     async def _film_from_cache(self, film_id: str) -> FilmFull | None:
