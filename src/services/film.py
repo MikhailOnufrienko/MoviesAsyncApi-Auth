@@ -97,7 +97,7 @@ class FilmService:
 
         """
 
-        films = await self._films_from_cache(page, size, query)
+        total, films = await self._films_from_cache(page, size, query)
 
         if not films:
             start_index = (page - 1) * size
@@ -122,9 +122,8 @@ class FilmService:
             total, films = await self._get_films_from_elastic(search_query)
             if not films:
                 return 0, None
-            await self._put_films_to_cache(page, size, films, query=query)
+            await self._put_films_to_cache(page, size, total, films, query=query)
             return total, films
-        total = len(films)
         return total, films
 
     async def _get_films_from_elastic(
