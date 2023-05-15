@@ -47,9 +47,9 @@ async def filmlist(
         next = None
         size = None
     else:
-        prev = f'/films?page={page_number-1}' if page_number > 1 else None
+        prev = f'/films?page_number={page_number-1}' if page_number > 1 else None
         next = (
-            f'/films?page={page_number+1}'
+            f'/films?page_number={page_number+1}'
             if (page_number - 1) * page_size + len(filmlist) < total
             else None
         )
@@ -101,11 +101,11 @@ async def film_search(
         size = None
     else:
         prev = (
-            f'/films/search?query={query}&page={page_number-1}'
+            f'/films/search?query={query}&page_number={page_number-1}'
             if page_number > 1 else None
         )
         next = (
-            f'/films/search?query={query}&page={page_number+1}'
+            f'/films/search?query={query}&page_number={page_number+1}'
             if (page_number - 1) * page_size + len(filmlist) < total else None
         )
 
