@@ -38,7 +38,7 @@ class FilmService:
         in accordance with filtration conditions.
 
         """
-        films = await self._films_from_cache(page, size, genre)
+        total, films = await self._films_from_cache(page, size, genre)
 
         if not films:
             start_index = (page - 1) * size
@@ -81,9 +81,9 @@ class FilmService:
             total, films = await self._get_films_from_elastic(search_query)
             if not films:
                 return 0, None
-            await self._put_films_to_cache(page, size, films, genre)
+            await self._put_films_to_cache(page, size, total, films, genre)
             return total, films
-        total = len(films)
+        # total = len(films)
         return total, films
 
     async def search_films(
@@ -97,7 +97,7 @@ class FilmService:
 
         """
 
-        films = await self._films_from_cache(page, size, query)
+        total, films = await self._films_from_cache(page, size, query)
 
         if not films:
             start_index = (page - 1) * size
@@ -122,9 +122,9 @@ class FilmService:
             total, films = await self._get_films_from_elastic(search_query)
             if not films:
                 return 0, None
-            await self._put_films_to_cache(page, size, films, query=query)
+            await self._put_films_to_cache(page, size, total, films, query=query)
             return total, films
-        total = len(films)
+        # total = len(films)
         return total, films
 
     async def _get_films_from_elastic(
@@ -177,7 +177,7 @@ class FilmService:
     async def _films_from_cache(
         self, page: int, size: int,
         query: str = None, genre: UUID = None
-    ):
+    ) -> tuple[int, list[FilmShort]]:
         """Retrieve films from Redis cache.
 
         """
@@ -185,12 +185,13 @@ class FilmService:
         data = await self.redis.get(cache_key)
 
         if not data:
-            return None
+            return 0, None
 
-        films_list = json.loads(data)
-        films = [FilmShort.parse_raw(film) for film in films_list]
+        films_data = json.loads(data)
+        films = [FilmShort.parse_raw(film) for film in films_data['films']]
+        total = films_data['total']
 
-        return films
+        return total, films
 
     async def _film_from_cache(self, film_id: str) -> FilmFull | None:
         """Retrieve a film instance from Redis cache.
@@ -218,6 +219,7 @@ class FilmService:
         self,
         page: int,
         size: int,
+        total: int,
         films: list[FilmShort],
         query: str = None,
         genre: UUID = None
@@ -226,7 +228,10 @@ class FilmService:
 
         """
         cache_key = f'films:{page}:{size}:{query}:{genre}'
-        data = [film.json() for film in films]
+        data = {
+            'total': total,
+            'films': [film.json() for film in films]
+        }
         json_str = json.dumps(data)
         await self.redis.set(cache_key, json_str, FILM_CACHE_EXPIRE_IN_SECONDS)
 
