@@ -1,8 +1,6 @@
 import uuid
 import json
 
-from tests.functional.settings import test_settings
-
 
 async def make_test_es_data(existing_query: str) -> list:
     """Create test data for ElasticSearch."""
@@ -42,7 +40,7 @@ async def get_es_bulk_query(data: list, index: str, id_field: str) -> list:
     """Creates a list with es_data in json format."""
 
     bulk_query = []
-    
+
     for row in data:
         bulk_query.extend([
             json.dumps(

@@ -37,7 +37,7 @@ def es_write_data(es_client: AsyncElasticsearch) -> callable:
         response = await es_client.bulk(operations=str_query, refresh=True)
 
         if response['errors']:
-            raise Exception('Ошибка записи данных в Elasticsearch')
+            raise Exception('Error while loading to ElasticSearch')
 
     return inner
 
@@ -51,12 +51,11 @@ def make_get_request(session_client: aiohttp.ClientSession) -> callable:
 
         async with session_client.get(url, params=query_data) as response:
             body = await response.json()
-            headers = response.headers
             status = response.status
-            return body, headers, status
+            return body, status
 
     return inner
-    
+
 
 @pytest.fixture
 async def delete_test_data(es_client: AsyncElasticsearch) -> callable:
@@ -69,10 +68,13 @@ async def delete_test_data(es_client: AsyncElasticsearch) -> callable:
             index=test_settings.es_index,
             body={"query": {"match_phrase": {"title": query_parameter}}}
         )
+
     return inner
 
 
 @pytest.fixture(autouse=True)
-async def run_after_tests(delete_test_data):
+async def run_after_tests(delete_test_data: callable) -> None:
+    """Run functions after each test."""
+
     yield
     await delete_test_data(QUERY_EXIST)
