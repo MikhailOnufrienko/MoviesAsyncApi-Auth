@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.schemes import FilmFull, FilmList
 from services.film import FilmService, get_film_service
-# from utils.constants import FILM_NOT_FOUND
 from src.utils.constants import FILM_NOT_FOUND
 
 router = APIRouter()
@@ -47,11 +46,12 @@ async def filmlist(
         next = None
         size = None
     else:
-        prev = f'/films?page_number={page_number-1}' if page_number > 1 else None
+        prev = (
+            f'/films?page_number={page_number-1}' if page_number > 1 else None
+        )
         next = (
             f'/films?page_number={page_number+1}'
-            if (page_number - 1) * page_size + len(filmlist) < total
-            else None
+            if (page_number - 1) * page_size + len(filmlist) < total else None
         )
         size = get_page_size(page_number, total, page_size, next)
 

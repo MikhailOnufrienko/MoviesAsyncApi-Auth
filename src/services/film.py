@@ -191,7 +191,7 @@ class FilmService:
         films = [FilmShort.parse_raw(film) for film in films_data['films']]
         total = films_data['total']
 
-        return films
+        return total, films
 
     async def _film_from_cache(self, film_id: str) -> FilmFull | None:
         """Retrieve a film instance from Redis cache.
