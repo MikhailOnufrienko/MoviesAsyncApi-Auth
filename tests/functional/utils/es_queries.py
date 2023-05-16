@@ -4,7 +4,9 @@ import json
 from tests.functional.settings import test_settings
 
 
-async def make_test_es_data(existing_query):
+async def make_test_es_data(existing_query: str) -> list:
+    """Create test data for ElasticSearch."""
+
     return [{
         'id': str(uuid.uuid4()),
         'imdb_rating': 8.5,
@@ -36,7 +38,9 @@ async def make_test_es_data(existing_query):
     } for _ in range(50)]
 
 
-async def get_es_bulk_query(data, index_name, id_field):
+async def get_es_bulk_query(data: list, index: str, id_field: str) -> list:
+    """Creates a list with es_data in json format."""
+
     bulk_query = []
     
     for row in data:
@@ -44,8 +48,8 @@ async def get_es_bulk_query(data, index_name, id_field):
             json.dumps(
                 {
                     'index': {
-                        '_index': index_name,
-                        '_id': row[str(id_field)],
+                        '_index': index,
+                        '_id': row[id_field],
                     }
                 }
             ),
