@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.schemes import FilmFull, FilmList
 from services.film import FilmService, get_film_service
-from utils.constants import FILM_NOT_FOUND
+# from utils.constants import FILM_NOT_FOUND
+from src.utils.constants import FILM_NOT_FOUND
 
 router = APIRouter()
 

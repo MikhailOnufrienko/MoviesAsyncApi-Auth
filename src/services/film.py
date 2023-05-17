@@ -187,11 +187,10 @@ class FilmService:
         if not data:
             return 0, None
 
-        films_data = json.loads(data)
-        films = [FilmShort.parse_raw(film) for film in films_data['films']]
-        total = films_data['total']
+        films_list = json.loads(data)
+        films = [FilmShort.parse_raw(film) for film in films_list]
 
-        return total, films
+        return films
 
     async def _film_from_cache(self, film_id: str) -> FilmFull | None:
         """Retrieve a film instance from Redis cache.
