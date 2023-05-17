@@ -4,6 +4,7 @@ import aiohttp
 
 from tests.functional.settings import test_settings
 from tests.functional.utils.es_queries import get_es_bulk_query
+from tests.functional.utils import indices
 
 
 QUERY_EXIST = 'PYTESTFILMS'
@@ -21,6 +22,23 @@ async def session_client():
     session = aiohttp.ClientSession()
     yield session
     await session.close()
+
+
+@pytest.fixture
+def es_create_indices(es_client: AsyncElasticsearch):
+    """pass"""
+
+    async def inner(index_name: str):
+        """pass"""
+
+        if not await es_client.indices.exists(index=index_name):
+            await es_client.indices.create(
+                index=index_name,
+                settings=indices.MOVIES_INDEX_SETTINGS['settings'],
+                mappings=indices.MOVIES_INDEX_SETTINGS['mappings']
+            )
+        
+    return inner
 
 
 @pytest.fixture
@@ -72,9 +90,18 @@ async def delete_test_data(es_client: AsyncElasticsearch) -> callable:
     return inner
 
 
+# @pytest.fixture(autouse=True)
+# async def run_before_tests(es_create_indices):
+#     """"""
+
+#     await es_create_indices('test')
+#     yield
+
+
 @pytest.fixture(autouse=True)
-async def run_after_tests(delete_test_data: callable) -> None:
+async def run_after_tests(delete_test_data: callable, es_create_indices) -> None:
     """Run functions after each test."""
 
+    await es_create_indices('testtest')
     yield
     await delete_test_data(QUERY_EXIST)
