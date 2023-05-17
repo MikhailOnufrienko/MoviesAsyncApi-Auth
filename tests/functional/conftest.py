@@ -1,6 +1,9 @@
 import pytest
 from elasticsearch import AsyncElasticsearch
 import aiohttp
+# from redis import Redis
+# from aioredis.client import Redis
+import redis.asyncio as redis
 
 from tests.functional.settings import test_settings
 from tests.functional.utils.es_queries import get_es_bulk_query
@@ -8,6 +11,9 @@ from tests.functional.utils import indices
 
 
 QUERY_EXIST = 'PYTESTFILMS'
+
+
+# r = Redis()
 
 
 @pytest.fixture(scope='function')
@@ -22,6 +28,30 @@ async def session_client():
     session = aiohttp.ClientSession()
     yield session
     await session.close()
+
+
+@pytest.fixture(scope='function')
+async def redis_client():
+    client = redis.Redis()
+    await client.flushdb()
+    yield client
+    await client.close()
+
+
+@pytest.fixture
+def redis_cleare_cache(redis_client):
+
+    async def inner():
+        await redis_client.flushall()
+    
+    return inner
+
+
+@pytest.fixture(scope='function')
+async def run_after_each_test(redis_cleare_cache):
+    await redis_cleare_cache()
+    yield
+    await redis_cleare_cache()
 
 
 @pytest.fixture
@@ -82,10 +112,13 @@ async def delete_test_data(es_client: AsyncElasticsearch) -> callable:
     async def inner(query_parameter: str):
         """Function logic."""
 
-        await es_client.delete_by_query(
-            index=test_settings.es_index,
-            body={"query": {"match_phrase": {"title": query_parameter}}}
-        )
+        try:
+            await es_client.delete_by_query(
+                index=test_settings.es_index,
+                body={"query": {"match_phrase": {"title": query_parameter}}}
+            )
+        except Exception:
+            pass
 
     return inner
 
@@ -99,9 +132,14 @@ async def delete_test_data(es_client: AsyncElasticsearch) -> callable:
 
 
 @pytest.fixture(autouse=True)
-async def run_after_tests(delete_test_data: callable, es_create_indices) -> None:
+async def run_before_and_after_tests(
+    delete_test_data: callable,
+    es_create_indices: callable
+) -> None:
     """Run functions after each test."""
 
-    await es_create_indices('testtest')
+    await es_create_indices(test_settings.es_index)
+
     yield
+
     await delete_test_data(QUERY_EXIST)
