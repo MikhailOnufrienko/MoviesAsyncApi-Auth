@@ -24,7 +24,7 @@ async def test_get_all_genres(
     
     """
     await create_index(es_client)
-    await es_write_data(es_data, 'genres')
+    await es_write_data(data=es_data, es_index='genres')
     response = await make_get_request('genres')
     assert len(response.body) == expected_answer
     assert response.status == HTTPStatus.OK, f'{response.status} must be 200'
