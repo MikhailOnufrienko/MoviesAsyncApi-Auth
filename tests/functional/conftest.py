@@ -13,9 +13,6 @@ from tests.functional.utils import indices
 QUERY_EXIST = 'PYTESTFILMS'
 
 
-# r = Redis()
-
-
 @pytest.fixture(scope='function')
 async def es_client():
     client = AsyncElasticsearch(hosts=test_settings.es_host)
@@ -35,37 +32,22 @@ async def redis_client():
     client = redis.Redis()
     await client.flushdb()
     yield client
+    await client.flushall()
     await client.close()
-
-
-@pytest.fixture
-def redis_cleare_cache(redis_client):
-
-    async def inner():
-        await redis_client.flushall()
-    
-    return inner
-
-
-@pytest.fixture(scope='function')
-async def run_after_each_test(redis_cleare_cache):
-    await redis_cleare_cache()
-    yield
-    await redis_cleare_cache()
 
 
 @pytest.fixture
 def es_create_indices(es_client: AsyncElasticsearch):
     """pass"""
 
-    async def inner(index_name: str):
+    async def inner(index_name: str, index_body: dict):
         """pass"""
 
         if not await es_client.indices.exists(index=index_name):
             await es_client.indices.create(
                 index=index_name,
-                settings=indices.MOVIES_INDEX_SETTINGS['settings'],
-                mappings=indices.MOVIES_INDEX_SETTINGS['mappings']
+                settings=index_body['settings'],
+                mappings=index_body['mappings']
             )
         
     return inner
@@ -75,11 +57,11 @@ def es_create_indices(es_client: AsyncElasticsearch):
 def es_write_data(es_client: AsyncElasticsearch) -> callable:
     """Write test data into ElasticSearch index."""
 
-    async def inner(es_data: list):
+    async def inner(es_data: list, index_name: str):
         """Function logic."""
 
         bulk_query = await get_es_bulk_query(
-            es_data, test_settings.es_index, test_settings.es_id_field
+            es_data, index_name, test_settings.es_id_field
         )
         str_query = '\n'.join(bulk_query) + '\n'
         response = await es_client.bulk(operations=str_query, refresh=True)
@@ -109,26 +91,18 @@ def make_get_request(session_client: aiohttp.ClientSession) -> callable:
 async def delete_test_data(es_client: AsyncElasticsearch) -> callable:
     """Remove all testing data from ElasticSearch index."""
 
-    async def inner(query_parameter: str):
+    async def inner(query: dict, index_name):
         """Function logic."""
 
         try:
             await es_client.delete_by_query(
-                index=test_settings.es_index,
-                body={"query": {"match_phrase": {"title": query_parameter}}}
+                index=index_name,
+                query=query
             )
         except Exception:
             pass
 
     return inner
-
-
-# @pytest.fixture(autouse=True)
-# async def run_before_tests(es_create_indices):
-#     """"""
-
-#     await es_create_indices('test')
-#     yield
 
 
 @pytest.fixture(autouse=True)
@@ -138,8 +112,12 @@ async def run_before_and_after_tests(
 ) -> None:
     """Run functions after each test."""
 
-    await es_create_indices(test_settings.es_index)
+    await es_create_indices(test_settings.es_movie_index, indices.MOVIES_INDEX_SETTINGS)
+    await es_create_indices(test_settings.es_genre_index, indices.GENRES_INDEX_SETTINGS)
+    await es_create_indices(test_settings.es_person_index, indices.PERSONS_INDEX_SETTINGS)
 
     yield
 
-    await delete_test_data(QUERY_EXIST)
+    await delete_test_data({"match_phrase": {"title": QUERY_EXIST}}, test_settings.es_movie_index)
+    await delete_test_data({"match_phrase": {"full_name":'Random Name'}}, test_settings.es_person_index)
+    await delete_test_data({"match_phrase": {"full_name":'Single Name'}}, test_settings.es_person_index)
