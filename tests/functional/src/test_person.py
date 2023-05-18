@@ -19,10 +19,10 @@ from ..settings import test_settings
 )
 @pytest.mark.asyncio
 async def test_get_person(es_client, es_write_data,
-                          uuid_person, expected_answer, 
+                          uuid_person, expected_answer,
                           es_data):
     """Test person search by uuid.
-    
+
     """
     await create_index(es_client)
     await es_write_data(es_data, 'persons')

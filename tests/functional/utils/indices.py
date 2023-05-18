@@ -65,11 +65,11 @@ genres_index = {
           "id": {
             "type": "keyword"
           },
-          "name": {
+          "description": {
             "type": "text",
             "analyzer": "ru_en"
           },
-          "description": {
+          "name": {
             "type": "text",
             "analyzer": "ru_en"
           }
