@@ -46,7 +46,7 @@ class PersonService:
 
     async def get_person_list(
         self, page: int, page_size: int, query: str | None
-    ) -> list[PersonFull]:
+    ) -> tuple[int, list[PersonFull]]:
         """Returns a list of person data with filtering and sorting."""
 
         if query:
@@ -66,6 +66,7 @@ class PersonService:
                 index=self.index_name, query=query, from_=from_page,
                 size=page_size, sort=[{"id": {"order": "asc"}}]
             )
+            total = response['hits']['total']['value']
             results = response['hits']['hits']
         except Exception as exc:
             logging.exception('An error occured: %s', exc)
@@ -88,11 +89,11 @@ class PersonService:
                 )
             )
 
-        return data
+        return total, data
 
     async def get_person_films_list(
         self, person_id: str
-    ) -> list[PersonShortFilmInfo]:
+    ) -> tuple[int, list[PersonShortFilmInfo]]:
         """Data about films in which the person took part."""
 
         try:
@@ -113,7 +114,7 @@ class PersonService:
             )
             films_data.append(obj)
 
-        return films_data
+        return len(films), films_data
 
     async def _get_person_from_elastic(
         self, person_id: str

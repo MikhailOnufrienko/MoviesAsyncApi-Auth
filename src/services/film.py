@@ -122,7 +122,7 @@ class FilmService:
             total, films = await self._get_films_from_elastic(search_query)
             if not films:
                 return 0, None
-            await self._put_films_to_cache(page, size, total, films, query=query)
+            await self._put_films_to_cache(page, size, total, films, query)
             return total, films
         # total = len(films)
         return total, films
@@ -186,11 +186,10 @@ class FilmService:
 
         if not data:
             return 0, None
-
-        films_list = json.loads(data)
-        films = [FilmShort.parse_raw(film) for film in films_list]
-
-        return films
+        films_data = json.loads(data)
+        films = [FilmShort.parse_raw(film) for film in films_data['films']]
+        total = films_data['total']
+        return total, films
 
     async def _film_from_cache(self, film_id: str) -> FilmFull | None:
         """Retrieve a film instance from Redis cache.

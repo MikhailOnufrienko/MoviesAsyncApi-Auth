@@ -41,11 +41,7 @@ async def test_films_search_response(
 
     if expected_answer['has_next_page'] is True:
         url = test_settings.service_url + body['next']
-        page2_query = {
-            'query': QUERY_EXIST,
-            'page_size': 10
-        }
-        body, status = await make_get_request(url, page2_query)
+        body, status = await make_get_request(url, query_data)
 
         assert body['prev'] is not None
         assert body['next'] is not None
