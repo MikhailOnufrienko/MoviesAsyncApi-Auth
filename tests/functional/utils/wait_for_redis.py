@@ -2,6 +2,7 @@ import time
 
 from redis import Redis
 
+
 if __name__ == '__main__':
     redis_client = Redis()
 
