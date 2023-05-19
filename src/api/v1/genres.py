@@ -37,7 +37,7 @@ async def genre_list(
     )
 
 
-@router.get('/{genre_id: str}', response_model=Genre, summary='Genre detail')
+@router.get('/{genre_id}', response_model=Genre, summary='Genre detail')
 async def genre_detail(
     genre_id: str,
     genre_service: GenreService = Depends(get_genre_service)

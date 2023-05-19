@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
-                                PersonShortFilmInfoList)
+                            PersonShortFilmInfoList)
 from services.person import PersonService, get_person_service
 from utils.constants import PERSON_NOT_FOUND
 
