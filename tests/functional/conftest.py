@@ -58,7 +58,6 @@ async def create_index(es_client):
 
 @pytest.fixture(scope='function')
 async def session():
-=======
 # import pytest
 # from elasticsearch import AsyncElasticsearch
 # import aiohttp
