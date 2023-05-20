@@ -10,6 +10,7 @@ from db.redis import get_redis
 from models.film import FilmPersonRoles, PersonShortFilmInfo
 from models.person import PersonFull
 from utils.search_films import get_films, get_roles
+import json
 
 PERSON_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
@@ -45,49 +46,54 @@ class PersonService:
         return person
 
     async def get_person_list(
-        self, page: int, page_size: int, query: str | None
+        self, page: int, page_size: int, search_query: str | None
     ) -> tuple[int, list[PersonFull]]:
         """Returns a list of person data with filtering and sorting."""
 
-        if query:
-            query = {
-                "match_phrase_prefix": {
-                    "full_name": query
+        total, data = await self._persons_from_cache(page, page_size, search_query)
+
+        if not data:
+            if search_query:
+                query = {
+                    "match_phrase_prefix": {
+                        "full_name": search_query
+                    }
                 }
-            }
-        else:
-            query = {"match_all": {}}
+            else:
+                query = {"match_all": {}}
 
-        data = []
-        from_page = (page - 1) * page_size
+            data = []
+            from_page = (page - 1) * page_size
 
-        try:
-            response = await self.elastic.search(
-                index=self.index_name, query=query, from_=from_page,
-                size=page_size, sort=[{"id": {"order": "asc"}}]
-            )
-            total = response['hits']['total']['value']
-            results = response['hits']['hits']
-        except Exception as exc:
-            logging.exception('An error occured: %s', exc)
-
-        for item in results:
-            person = item['_source']
-            films = await get_films(self.elastic, person['full_name'])
-            films_roles = await get_roles(films, person['full_name'])
-
-            data.append(
-                PersonFull(
-                    id=person['id'],
-                    full_name=person['full_name'],
-                    films=[
-                        FilmPersonRoles(
-                            id=film.id,
-                            roles=film.roles,
-                        ) for film in films_roles
-                    ]
+            try:
+                response = await self.elastic.search(
+                    index=self.index_name, query=query, from_=from_page,
+                    size=page_size, sort=[{"id": {"order": "asc"}}]
                 )
-            )
+                total = response['hits']['total']['value']
+                results = response['hits']['hits']
+            except Exception as exc:
+                logging.exception('An error occured: %s', exc)
+
+            for item in results:
+                person = item['_source']
+                films = await get_films(self.elastic, person['full_name'])
+                films_roles = await get_roles(films, person['full_name'])
+
+                data.append(
+                    PersonFull(
+                        id=person['id'],
+                        full_name=person['full_name'],
+                        films=[
+                            FilmPersonRoles(
+                                id=film.id,
+                                roles=film.roles,
+                            ) for film in films_roles
+                        ]
+                    )
+                )
+            
+            await self._put_persons_to_cache(page, page_size, total, data, search_query)
 
         return total, data
 
@@ -152,6 +158,23 @@ class PersonService:
 
         return PersonFull.parse_raw(data)
 
+    async def _persons_from_cache(
+        self, page: int, size: int, query: str = None
+    ) -> tuple:
+        """Get person list data from Redis cache."""
+
+        cache_key = f'persons:{page}:{size}:{query}'
+        data = await self.redis.get(cache_key)
+
+        if not data:
+            return 0, []
+
+        persons_data = json.loads(data)
+        persons = [PersonFull.parse_raw(person) for person in persons_data['persons']]
+        total = persons_data['total']
+
+        return total, persons
+
     async def _put_person_to_cache(self, person: PersonFull) -> None:
         """Put person data into the Redis cache."""
 
@@ -161,6 +184,26 @@ class PersonService:
             cache_key,
             person.json(),
             PERSON_CACHE_EXPIRE_IN_SECONDS,
+        )
+    
+    async def _put_persons_to_cache(
+        self, page: int, size: int, total: int,
+        persons: list[PersonFull], query: str = None,
+    ) -> None:
+        """Put person list data into Redis cache."""
+
+        cache_key = f'persons:{page}:{size}:{query}'
+
+        data = {
+            'total': total,
+            'persons': [person.json() for person in persons]
+        }
+        json_str = json.dumps(data)
+
+        await self.redis.set(
+            cache_key,
+            json_str,
+            PERSON_CACHE_EXPIRE_IN_SECONDS
         )
 
 
