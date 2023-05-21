@@ -1,6 +1,5 @@
-import uuid
 import json
-import names
+import uuid
 
 
 async def make_test_es_movie_data(existing_query: str) -> list:
@@ -40,20 +39,27 @@ async def make_test_es_movie_data(existing_query: str) -> list:
 async def make_test_es_persons_data(existing_query: str) -> list:
     """Create test data for ElasticSearch."""
 
-    data = [{
-        'id': str(uuid.uuid4()),
-        'full_name': 'Random Name',
-    } for _ in range(20)] + [{
+    return [{
         'id': str(uuid.uuid4()),
         'full_name': existing_query,
+    } for _ in range(20)] + [{
+        'id': '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
+        'full_name': existing_query,
     }]
-    
-    # data.append({
-    #     'id': str(uuid.uuid4()),
-    #     'full_name': existing_query,
-    # })
 
-    return data
+
+async def make_test_es_genres_data():
+    """Generate test genre data."""
+
+    return [{
+        'id': str(uuid.uuid4()),
+        'name': 'Comedy',
+        'description': 'Movies to make you laugh:)'
+    } for _ in range(9)] + [{
+        'id': '120a21cf-9097-479e-904a-13dd7198c1dd',
+        'name': 'Adventure',
+        'description': 'Exciting and unusual experience.'
+    }]
 
 
 async def get_es_bulk_query(data: list, index: str, id_field: str) -> list:
