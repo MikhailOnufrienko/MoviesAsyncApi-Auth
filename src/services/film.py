@@ -1,4 +1,5 @@
 import json
+from abc import ABC, abstractmethod
 from functools import lru_cache
 from uuid import UUID
 
@@ -15,13 +16,24 @@ FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 minutes
 INDEX_NAME = 'movies'
 
 
+class RedisInterface(ABC):
+    @abstractmethod
+    def some_redis_method(self):
+        pass
+
+class AsyncElasticsearchInterface(ABC):
+    @abstractmethod
+    async def some_elastic_method(self):
+        pass
+
+
 class FilmService:
     """Class to represent films logic."""
 
     def __init__(
         self,
-        redis: Redis,
-        elastic: AsyncElasticsearch,
+        redis: RedisInterface,
+        elastic: AsyncElasticsearchInterface,
         index_name: str
     ):
         self.redis = redis
@@ -238,7 +250,7 @@ class FilmService:
 
 @lru_cache()
 def get_film_service(
-        redis: Redis = Depends(get_redis),
-        elastic: AsyncElasticsearch = Depends(get_elastic),
+        redis: RedisInterface = Depends(get_redis),
+        elastic: AsyncElasticsearchInterface = Depends(get_elastic),
 ) -> FilmService:
     return FilmService(redis, elastic, INDEX_NAME)

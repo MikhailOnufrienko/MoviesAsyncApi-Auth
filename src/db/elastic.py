@@ -1,8 +1,19 @@
+from abc import ABC, abstractmethod
 from elasticsearch import AsyncElasticsearch
 
-es: AsyncElasticsearch = AsyncElasticsearch(hosts='http://localhost:9200/')
+
+class AsyncSearchInterface(ABC):
+    @abstractmethod
+    async def get_search_connection(self):
+        pass
+
+    
+class AsyncSearchImplementation(AsyncSearchInterface):
+    async def get_search_connection(self):
+        return AsyncElasticsearch(hosts=['http://localhost:9200/'])
 
 
-# Функция понадобится при внедрении зависимостей
-async def get_elastic() -> AsyncElasticsearch:
-    return es
+async def main():
+    search_implementation = AsyncSearchImplementation()
+    get_elastic = await search_implementation.get_search_connection()
+
