@@ -51,7 +51,7 @@ MOVIES_INDEX_SETTINGS = {
             'imdb_rating': {
                 'type': 'float'
             },
-            'genre': {
+            'genres': {
                 'type': 'nested',
                 'dynamic': 'strict',
                 'properties': {
@@ -81,7 +81,7 @@ MOVIES_INDEX_SETTINGS = {
                 'type': 'text',
                 'analyzer': 'ru_en'
             },
-            'director': {
+            'directors': {
                 "type": "nested",
                 "dynamic": "strict",
                 'properties': {

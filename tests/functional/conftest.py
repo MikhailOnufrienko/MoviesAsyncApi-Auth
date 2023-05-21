@@ -113,7 +113,11 @@ def make_get_request(session_client: aiohttp.ClientSession) -> callable:
         """Function logic."""
 
         async with session_client.get(url=url, params=params) as response:
-            body = await response.json()
+            if response.content_type == 'application/json':
+                body = await response.json()
+            else:
+                body = await response.text()
+            # body = await response.json()
             status = response.status
 
             return models.HTTPResponse(

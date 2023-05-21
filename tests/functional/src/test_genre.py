@@ -20,7 +20,7 @@ async def test_get_all_genres(
     es_data = await es_queries.make_test_es_genres_data()
     await es_write_data(es_data, test_settings.es_genre_index)
 
-    url = test_settings.service_url + 'genres'
+    url = test_settings.service_url + 'genres/'
     response = await make_get_request(url)
     body, status = response.body, response.status
 
@@ -58,7 +58,7 @@ async def test_get_genre_by_id(
 
 @pytest.mark.parametrize(
     'genre_id, expected_answer',
-    parametrize.genre_detail_cache_parameters
+    [parametrize.genre_detail_parameters[0]]
 )
 @pytest.mark.asyncio
 async def test_genre_cache(
