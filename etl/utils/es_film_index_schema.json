@@ -48,7 +48,7 @@
       "imdb_rating": {
         "type": "float"
       },
-      "genre": {
+      "genres": {
         "type": "nested",
         "dynamic": "strict",
         "properties": {
@@ -78,7 +78,7 @@
         "type": "text",
         "analyzer": "ru_en"
       },
-      "director": {
+      "directors": {
         "type": "nested",
         "dynamic": "strict",
         "properties": {

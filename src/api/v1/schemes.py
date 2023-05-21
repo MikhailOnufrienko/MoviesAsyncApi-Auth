@@ -9,7 +9,7 @@ class FilmShort(BaseModel):
     """An API model to represent brief film information.
 
     """
-    id: UUID
+    id: str
     title: str
     imdb_rating: float | None
 
@@ -30,15 +30,16 @@ class GenreInFilm(BaseModel):
     """An API model to represent genre information within FilmFull class.
 
     """
-    id: UUID
+    id: str
     name: str
+    description: str | None
 
 
 class PersonInFilm(BaseModel):
     """An API model to represent person information within FilmFull class.
 
     """
-    id: UUID
+    id: str
     name: str | None
 
 

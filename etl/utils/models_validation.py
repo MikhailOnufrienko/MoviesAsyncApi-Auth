@@ -44,10 +44,10 @@ class ESGenreAndFilmModel(UUIDMixin):
 class ESFilmworkModel(UUIDMixin):
     """A model for Elasticsearch filmwork instances."""
     imdb_rating: float | None
-    genre: list[ESGenreAndFilmModel] | None
+    genres: list[ESGenreAndFilmModel] | None
     title: str
     description: str | None
-    director: list[ESPersonModel] | None
+    directors: list[ESPersonModel] | None
     actors_names: list[str] | None
     writers_names: list[str] | None
     actors: list[ESPersonModel] | None

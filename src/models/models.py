@@ -31,7 +31,7 @@ class FilmFull(FilmShort):
 
     """
     description: str | None
-    genre: list[Genre] | None = Field(default=[])
+    genres: list[Genre] | None = Field(default=[])
     actors: list[Person] | None = Field(default=[])
     writers: list[Person] | None = Field(default=[])
-    director: list[Person] | None = Field(default=[])
+    directors: list[Person] | None = Field(default=[])
