@@ -71,7 +71,7 @@ async def test_persons_search_response(
     body, status = await make_get_request(url, query_data)
 
     assert status == 200
-    assert len(body['results']) == 10
+    assert body['total'] == 21
     # assert body['total'] == 21
     # assert (body['next'] is not None) == True
 
