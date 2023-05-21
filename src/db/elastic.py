@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from elasticsearch import AsyncElasticsearch
 
 
@@ -10,10 +11,12 @@ class AsyncSearchInterface(ABC):
     
 class AsyncSearchImplementation(AsyncSearchInterface):
     async def get_search_connection(self):
-        return AsyncElasticsearch(hosts=['http://localhost:9200/'])
+        return AsyncElasticsearch()
 
 
 async def main():
     search_implementation = AsyncSearchImplementation()
-    get_elastic = await search_implementation.get_search_connection()
+    es = search_implementation.get_search_connection()
+    return es
 
+es = AsyncSearchImplementation()
