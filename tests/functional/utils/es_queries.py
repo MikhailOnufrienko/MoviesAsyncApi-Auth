@@ -1,8 +1,9 @@
 import uuid
 import json
+import names
 
 
-async def make_test_es_data(existing_query: str) -> list:
+async def make_test_es_movie_data(existing_query: str) -> list:
     """Create test data for ElasticSearch."""
 
     return [{
@@ -34,6 +35,25 @@ async def make_test_es_data(existing_query: str) -> list:
             {'id': '444', 'name': 'Howard'}
         ],
     } for _ in range(50)]
+
+
+async def make_test_es_persons_data(existing_query: str) -> list:
+    """Create test data for ElasticSearch."""
+
+    data = [{
+        'id': str(uuid.uuid4()),
+        'full_name': 'Random Name',
+    } for _ in range(20)] + [{
+        'id': str(uuid.uuid4()),
+        'full_name': existing_query,
+    }]
+    
+    # data.append({
+    #     'id': str(uuid.uuid4()),
+    #     'full_name': existing_query,
+    # })
+
+    return data
 
 
 async def get_es_bulk_query(data: list, index: str, id_field: str) -> list:

@@ -28,13 +28,40 @@ async def person_list_search(
     - **results**: list of persons
     """
 
-    objects = await person_service.get_person_list(
+    total, objects = await person_service.get_person_list(
         page_number,
         page_size,
         query
     )
 
-    return PersonList(
+    if total == 0:
+        prev = None
+        next = None
+    else:
+        prev = (
+            f'/persons/search?&page_number={page_number - 1}'
+            f'&page_size={page_size}'
+        )
+        prev += f'query={query}' if query else ''
+
+        if page_number <= 1:
+            prev = None
+
+        next = (
+            f'/persons/search?&page_number={page_number + 1}'
+            f'&page_size={page_size}'
+        )
+        next += f'query={query}' if query else ''
+
+        if (page_number - 1) * page_size + len(objects) >= total:
+            next = None
+
+    obj = PersonList(
+        total=total,
+        page=page_number,
+        size=len(objects),
+        prev=prev,
+        next=next,
         results=[
             Person(
                 id=person.id,
@@ -43,6 +70,8 @@ async def person_list_search(
             ) for person in objects
         ]
     )
+
+    return obj
 
 
 @router.get('/{person_id}', response_model=Person, summary='Person detail')
@@ -87,9 +116,10 @@ async def person_films_detail(
     - **results**: list of films
     """
 
-    films = await person_service.get_person_films_list(person_id)
+    total, films = await person_service.get_person_films_list(person_id)
 
     return PersonShortFilmInfoList(
+        total=total,
         results=[
             PersonShortFilmInfo(
                 id=film.id,

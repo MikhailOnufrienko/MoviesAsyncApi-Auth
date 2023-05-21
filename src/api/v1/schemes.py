@@ -74,6 +74,7 @@ class PersonShortFilmInfo(BaseModel):
 
 
 class PersonShortFilmInfoList(BaseModel):
+    total: int
     results: list[PersonShortFilmInfo]
 
 
@@ -84,4 +85,9 @@ class Person(BaseModel):
 
 
 class PersonList(BaseModel):
+    total: int
+    page: int
+    size: int
+    prev: str | None
+    next: str | None
     results: list[Person]
