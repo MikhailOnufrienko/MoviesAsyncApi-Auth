@@ -1,3 +1,6 @@
+from http import HTTPStatus
+
+
 FILM_QUERY_EXIST = 'The Star'
 FILM_QUERY_NOT_EXIST = 'Film Not-Exist'
 
@@ -58,4 +61,41 @@ person_search_parameters = [
             'has_next_page': False
         }
     )
+]
+
+
+genre_detail_parameters = [
+    (
+        '120a21cf-9097-479e-904a-13dd7198c1dd',
+        {
+            'status': HTTPStatus.OK,
+            'response_body': {
+                'name': 'Adventure',
+                'id': '120a21cf-9097-479e-904a-13dd7198c1dd'
+            }
+        },
+    ),
+    (
+        '111a11a1-1111-111a-111a-11aa1111a1aa',
+        {
+            'status': HTTPStatus.NOT_FOUND,
+            'response_body': {
+                'detail': 'Genre not found',
+            }
+        },
+    )
+]
+
+
+genre_detail_cache_parameters = [
+    (
+        '120a21cf-9097-479e-904a-13dd7198c1dd',
+        {
+            'status': HTTPStatus.OK,
+            'response_body': {
+                'name': 'Adventure',
+                'id': '120a21cf-9097-479e-904a-13dd7198c1dd'
+            }
+        },
+    ),
 ]
