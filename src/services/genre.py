@@ -5,7 +5,7 @@ from functools import lru_cache
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
-from db.elastic import AsyncSearchAbstract, get_elastic, elastic
+from db.elastic import AsyncSearchGenreAbstract, get_elastic, elastic
 from db.redis import AsyncCacheAbstract, get_redis, redis
 
 from models.genre import Genre
@@ -15,7 +15,7 @@ GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 INDEX_NAME = 'genres'
 
 
-class ElasticService(AsyncSearchAbstract):
+class ElasticService(AsyncSearchGenreAbstract):
     def __init__(self, elastic: AsyncElasticsearch, index_name: str):
         self.elastic = elastic
         self.index_name = index_name
@@ -118,7 +118,7 @@ es_service = ElasticService(elastic, INDEX_NAME)
 class GenreService:
 
     def __init__(
-        self, elastic: AsyncSearchAbstract,
+        self, elastic: AsyncSearchGenreAbstract,
         redis: AsyncCacheAbstract, index_name: str
     ):
         """GenreService class initializing."""

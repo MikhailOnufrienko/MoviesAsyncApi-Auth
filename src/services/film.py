@@ -6,7 +6,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from aioredis import Redis
 from fastapi import Depends
 
-from db.elastic import AsyncSearchAbstract, elastic, get_elastic
+from db.elastic import AsyncSearchFilmAbstract, elastic, get_elastic
 from db.redis import AsyncCacheAbstract, redis, get_redis
 from models.models import FilmFull, FilmShort
 
@@ -16,7 +16,7 @@ FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 minutes
 INDEX_NAME = 'movies'
 
 
-class ElasticService(AsyncSearchAbstract):
+class ElasticService(AsyncSearchFilmAbstract):
     def __init__(self, elastic: AsyncElasticsearch, index_name: str):
         self.elastic = elastic
         self.index_name = index_name
@@ -129,7 +129,7 @@ es_service = ElasticService(elastic, INDEX_NAME)
 class FilmService:
     """Class to represent films logic."""
      
-    def __init__(self, rs: AsyncCacheAbstract, es: AsyncSearchAbstract, index_name: str):
+    def __init__(self, rs: AsyncCacheAbstract, es: AsyncSearchFilmAbstract, index_name: str):
         self.redis_service = rs
         self.elastic_service = es
         self.index_name = index_name
