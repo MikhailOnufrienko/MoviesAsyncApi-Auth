@@ -5,8 +5,8 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from db.elastic import main as es_main
-from db.redis import main as redis_main
+from db.elastic import get_elastic
+from db.redis import get_redis
 from models.film import FilmPersonRoles, PersonShortFilmInfo
 from models.person import PersonFull
 from utils.search_films import get_films, get_roles
@@ -165,7 +165,7 @@ class PersonService:
 
 @lru_cache
 def get_person_service(
-    elastic: AsyncElasticsearch = Depends(es_main),
-    redis: Redis = Depends(redis_main)
+    elastic: AsyncElasticsearch = Depends(get_elastic),
+    redis: Redis = Depends(get_redis)
 ) -> PersonService:
     return PersonService(elastic, redis, INDEX_NAME)
