@@ -129,7 +129,7 @@ es_service = ElasticService(elastic, INDEX_NAME)
 class FilmService:
     """Class to represent films logic."""
      
-    def __init__(self, rs: RedisService, es: ElasticService, index_name: str):
+    def __init__(self, rs: AsyncCacheAbstract, es: AsyncSearchAbstract, index_name: str):
         self.redis_service = rs
         self.elastic_service = es
         self.index_name = index_name

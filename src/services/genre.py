@@ -118,8 +118,8 @@ es_service = ElasticService(elastic, INDEX_NAME)
 class GenreService:
 
     def __init__(
-        self, elastic: AsyncElasticsearch,
-        redis: Redis, index_name: str
+        self, elastic: AsyncSearchAbstract,
+        redis: AsyncCacheAbstract, index_name: str
     ):
         """GenreService class initializing."""
 
