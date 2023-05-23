@@ -24,7 +24,8 @@ async def test_films_by_genre_response(
     """
 
     es_data = await es_queries.make_test_es_movie_data(
-        existing_query=parametrize.FILM_QUERY_EXIST
+        existing_film_query=parametrize.FILM_QUERY_EXIST,
+        existing_person_query=parametrize.PERSON_SINGLE_QUERY_EXIST
     )
     await es_write_data(es_data, test_settings.es_movie_index)
 
@@ -66,7 +67,8 @@ async def test_film_detail_response(
     """
 
     es_data = await es_queries.make_test_es_movie_data(
-        existing_query=parametrize.FILM_QUERY_EXIST
+        existing_film_query=parametrize.FILM_QUERY_EXIST,
+        existing_person_query=parametrize.PERSON_SINGLE_QUERY_EXIST
     )
     await es_write_data(es_data, test_settings.es_movie_index)
 
@@ -93,7 +95,8 @@ async def test_films_by_genre_redis_cache(
     assert await redis_client.keys('*') == []
 
     es_data = await es_queries.make_test_es_movie_data(
-        existing_query=parametrize.FILM_QUERY_EXIST
+        existing_film_query=parametrize.FILM_QUERY_EXIST,
+        existing_person_query=parametrize.PERSON_SINGLE_QUERY_EXIST
     )
     await es_write_data(es_data, test_settings.es_movie_index)
 
@@ -137,7 +140,8 @@ async def test_film_detail_cache(
     assert await redis_client.keys('*') == []
 
     es_data = await es_queries.make_test_es_movie_data(
-        existing_query=parametrize.FILM_QUERY_EXIST
+        existing_film_query=parametrize.FILM_QUERY_EXIST,
+        existing_person_query=parametrize.PERSON_SINGLE_QUERY_EXIST
     )
     await es_write_data(es_data, test_settings.es_movie_index)
 

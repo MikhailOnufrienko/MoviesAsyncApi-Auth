@@ -79,7 +79,7 @@ class PersonService:
 
             for item in results:
                 person = item['_source']
-                films = await get_films(self.elastic, person['full_name'])
+                _, films = await get_films(self.elastic, person['full_name'])
                 films_roles = await get_roles(films, person['full_name'])
 
                 data.append(
@@ -106,6 +106,11 @@ class PersonService:
     ) -> tuple[int, list[PersonShortFilmInfo]]:
         """Data about films in which the person took part."""
 
+        try:
+            doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
+        except NotFoundError:
+            return 0, None
+
         total, films_data = await self._person_films_from_cache(person_id)
 
         if not films_data:
@@ -116,7 +121,7 @@ class PersonService:
                 return []
 
             person = doc['_source']
-            films = await get_films(self.elastic, person['full_name'])
+            total, films = await get_films(self.elastic, person['full_name'])
             films_data = []
 
             for film in films:
@@ -127,8 +132,6 @@ class PersonService:
                     imdb_rating=film['imdb_rating'],
                 )
                 films_data.append(obj)
-
-            total = len(films_data)
 
             await self._put_person_films_to_cache(person_id, total, films_data)
 
@@ -145,7 +148,7 @@ class PersonService:
             return None
 
         person = doc['_source']
-        films = await get_films(self.elastic, person['full_name'])
+        _, films = await get_films(self.elastic, person['full_name'])
         films_roles = await get_roles(films, person['full_name'])
 
         return PersonFull(

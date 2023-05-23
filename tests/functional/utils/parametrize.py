@@ -4,7 +4,8 @@ from http import HTTPStatus
 FILM_QUERY_EXIST = 'The Star'
 FILM_QUERY_NOT_EXIST = 'Film Not-Exist'
 
-PERSON_QUERY_EXIST = 'Random Name'
+PERSON_SINGLE_QUERY_EXIST = 'Single Name'
+PERSON_MULTIPLE_QUERY_EXIST = 'Multiple Name'
 PERSON_QUERY_NOT_EXIST = 'Person Not-Exist'
 
 
@@ -84,7 +85,10 @@ film_detail_parameters = [
                     }
                 ],
                 'actors': [
-                    {'id': '111', 'name': 'Ann'},
+                    {
+                        'id': '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
+                        'name': PERSON_SINGLE_QUERY_EXIST
+                    },
                     {'id': '222', 'name': 'Bob'}
                 ],
                 'writers': [
@@ -120,7 +124,7 @@ film_detail_cache_parameters = [
             'title': 'The Star',
             'imdb_rating': 8.5,
             'description': 'New World',
-            'genre': [
+            'genres': [
                 {
                     'id': '120a21cf-9097-479e-904a-13dd7198c1dd',
                     'name': 'Adventure',
@@ -128,8 +132,8 @@ film_detail_cache_parameters = [
             ],
             'actors': [
                 {
-                    'id': '111',
-                    'name': 'Ann'
+                    'id': '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
+                    'name': PERSON_SINGLE_QUERY_EXIST
                 },
                 {
                     'id': '222',
@@ -146,7 +150,7 @@ film_detail_cache_parameters = [
                     'name': 'Howard'
                 }
             ],
-            'director': [
+            'directors': [
                 {
                     'id': 'a0077238-c960-4c22-9824-e49d8585cf3d',
                     'name': 'Main Director'
@@ -160,13 +164,25 @@ film_detail_cache_parameters = [
 person_search_parameters = [
     (
         {
-            'query': PERSON_QUERY_EXIST,
+            'query': PERSON_SINGLE_QUERY_EXIST,
             'page_number': 1,
             'page_size': 10
         },
         {
             'status': 200,
-            'length': 21,
+            'length': 1,
+            'has_next_page': False
+        }
+    ),
+    (
+        {
+            'query': PERSON_MULTIPLE_QUERY_EXIST,
+            'page_number': 1,
+            'page_size': 10
+        },
+        {
+            'status': 200,
+            'length': 20,
             'has_next_page': True
         }
     ),
@@ -180,6 +196,48 @@ person_search_parameters = [
             'status': 200,
             'length': 0,
             'has_next_page': False
+        }
+    )
+]
+
+
+person_films_parameters = [
+    (
+        '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
+        {
+            'status': 200,
+            'length': 50,
+            'body_length': 10,
+        }
+    ),
+    (
+        '22b22b2b-2222-222b-b222-2bb2bb2b22b2',
+        {
+            'status': 404,
+            'length': 0,
+            'body_length': 0,
+        }
+    )
+]
+
+
+person_detail_parameters = [
+    (
+        '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
+        {
+            'status': 200,
+            'id': '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
+            'full_name': PERSON_SINGLE_QUERY_EXIST,
+            'length': 10
+        }
+    ),
+    (
+        '22b22b2b-2222-222b-b222-2bb2bb2b22b2',
+        {
+            'status': 404,
+            'id': '22b22b2b-2222-222b-b222-2bb2bb2b22b2',
+            'full_name': PERSON_QUERY_NOT_EXIST,
+            'length': 0,
         }
     )
 ]
