@@ -30,8 +30,12 @@ class ElasticService(AsyncSearchAbstract):
 
         return Genre(**doc['_source'])
     
-    async def _get_list_of_objects(self, search_query: dict) -> tuple[int, list[Genre]]:
-        """Request to ElasticSearch to get a list of genres and total number of genres."""
+    async def _get_list_of_objects(
+            self,
+            search_query: dict
+        ) -> tuple[int, list[Genre]]:
+        """Request to ElasticSearch to get a list of genres
+        and total number of genres."""
 
         result = await self.elastic.search(
             index=self.index_name,
@@ -66,7 +70,9 @@ class RedisService(AsyncCacheAbstract):
 
         return Genre.parse_raw(data)
     
-    async def _get_list_of_objects(self, page: int, page_size: int) -> tuple[int, list[Genre]]:
+    async def _get_list_of_objects(
+            self, page: int, page_size: int
+        ) -> tuple[int, list[Genre]]:
         """Retrieve genres from Redis cache.
 
         """
@@ -108,7 +114,8 @@ class RedisService(AsyncCacheAbstract):
             'genres': [genre.json() for genre in genres]
         }
         json_str = json.dumps(data)
-        await self.redis.set(cache_key, json_str, GENRE_CACHE_EXPIRE_IN_SECONDS)
+        await self.redis.set(cache_key, json_str,
+                             GENRE_CACHE_EXPIRE_IN_SECONDS)
 
 
 redis_service = RedisService(redis)
@@ -142,10 +149,14 @@ class GenreService:
 
         return genre
 
-    async def get_genre_list(self, page: int, page_size: int) -> tuple[int, list[Genre]]:
+    async def get_genre_list(
+            self, page: int, page_size: int
+        ) -> tuple[int, list[Genre]]:
         """Returns a list of genre data."""
 
-        total, genre_data = await redis_service._get_list_of_objects(page, page_size)
+        total, genre_data = await redis_service._get_list_of_objects(
+            page, page_size
+        )
         if not genre_data:
             start_index = (page - 1) * page_size
             query = {
@@ -158,7 +169,8 @@ class GenreService:
             total, genre_data= await es_service._get_list_of_objects(query)
             if not genre_data:
                 return 0, None
-            await redis_service._put_list_of_objects(page, page_size, total, genre_data)
+            await redis_service._put_list_of_objects(page, page_size,
+                                                     total, genre_data)
             return total, genre_data
 #           except Exception as exc:
 #              logging.exception('An error occured: %s', exc)

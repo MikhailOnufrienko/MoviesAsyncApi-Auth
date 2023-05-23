@@ -119,7 +119,8 @@ class RedisService(AsyncCacheAbstract):
             'films': [film.json() for film in films]
         }
         json_str = json.dumps(data)
-        await self.redis.set(cache_key, json_str, FILM_CACHE_EXPIRE_IN_SECONDS)
+        await self.redis.set(cache_key, json_str,
+                            FILM_CACHE_EXPIRE_IN_SECONDS)
 
 
 redis_service = RedisService(redis)
@@ -129,7 +130,12 @@ es_service = ElasticService(elastic, INDEX_NAME)
 class FilmService:
     """Class to represent films logic."""
      
-    def __init__(self, rs: AsyncCacheAbstract, es: AsyncSearchAbstract, index_name: str):
+    def __init__(
+            self,
+            rs: AsyncCacheAbstract,
+            es: AsyncSearchAbstract,
+            index_name: str
+        ):
         self.redis_service = rs
         self.elastic_service = es
         self.index_name = index_name
@@ -144,7 +150,9 @@ class FilmService:
         in accordance with filtration conditions.
 
         """
-        total, films = await redis_service._get_list_of_objects(page, size, genre)
+        total, films = await redis_service._get_list_of_objects(
+            page, size, genre
+        )
 
         if not films:
             start_index = (page - 1) * size
@@ -187,7 +195,8 @@ class FilmService:
             total, films = await es_service._get_list_of_objects(search_query)
             if not films:
                 return 0, None
-            await redis_service._put_list_of_objects(page, size, total, films, genre)
+            await redis_service._put_list_of_objects(page, size,
+                                                     total, films, genre)
             return total, films
         return total, films
 
@@ -202,7 +211,8 @@ class FilmService:
 
         """
 
-        total, films = await redis_service._get_list_of_objects(page, size, query)
+        total, films = await redis_service._get_list_of_objects(page,
+                                                                size, query)
 
         if not films:
             start_index = (page - 1) * size
@@ -227,7 +237,8 @@ class FilmService:
             total, films = await es_service._get_list_of_objects(search_query)
             if not films:
                 return 0, None
-            await redis_service._put_list_of_objects(page, size, total, films, query)
+            await redis_service._put_list_of_objects(page, size,
+                                                     total, films, query)
             return total, films
         return total, films
 

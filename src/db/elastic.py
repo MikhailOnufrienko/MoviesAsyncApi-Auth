@@ -4,6 +4,10 @@ from elasticsearch import AsyncElasticsearch
 
 
 class AsyncSearchAbstract(ABC):
+    """An abstract class for retrieving data from a search service.
+    
+    """
+    
     @abstractmethod
     async def _get_single_object(self):
         pass
