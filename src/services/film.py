@@ -30,7 +30,7 @@ class ElasticService(AsyncSearchAbstract):
         except NotFoundError:
             return None
         return FilmFull(**doc['_source'])
-    
+
     async def _get_list_of_objects(
         self,
         search_query: dict
@@ -59,7 +59,7 @@ class ElasticService(AsyncSearchAbstract):
 class RedisService(AsyncCacheAbstract):
     def __init__(self, redis: Redis):
         self.redis = redis
- 
+
     async def _get_single_object(self, film_id: str) -> FilmFull | None:
         """Retrieve a film instance from Redis cache.
 
@@ -69,7 +69,7 @@ class RedisService(AsyncCacheAbstract):
         if not data:
             return None
         return FilmFull.parse_raw(data)
-    
+
     async def _get_list_of_objects(
         self, page: int, size: int,
         query: str = None, genre: UUID = None
@@ -88,7 +88,7 @@ class RedisService(AsyncCacheAbstract):
         total = films_data['total']
 
         return total, films
-    
+
     async def _put_single_object(self, film: FilmFull):
         """Save a film instance to Redis cache.
 
@@ -120,7 +120,7 @@ class RedisService(AsyncCacheAbstract):
         }
         json_str = json.dumps(data)
         await self.redis.set(cache_key, json_str,
-                            FILM_CACHE_EXPIRE_IN_SECONDS)
+                             FILM_CACHE_EXPIRE_IN_SECONDS)
 
 
 redis_service = RedisService(redis)
@@ -129,13 +129,13 @@ es_service = ElasticService(elastic, INDEX_NAME)
 
 class FilmService:
     """Class to represent films logic."""
-     
+
     def __init__(
             self,
             rs: AsyncCacheAbstract,
             es: AsyncSearchAbstract,
             index_name: str
-        ):
+    ):
         self.redis_service = rs
         self.elastic_service = es
         self.index_name = index_name
@@ -191,7 +191,7 @@ class FilmService:
                     "from": start_index,
                     "size": size
                 }
-            
+
             total, films = await es_service._get_list_of_objects(search_query)
             if not films:
                 return 0, None
@@ -233,7 +233,7 @@ class FilmService:
                 "from": start_index,
                 "size": size
             }
-            
+
             total, films = await es_service._get_list_of_objects(search_query)
             if not films:
                 return 0, None

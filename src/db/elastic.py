@@ -5,9 +5,9 @@ from elasticsearch import AsyncElasticsearch
 
 class AsyncSearchAbstract(ABC):
     """An abstract class for retrieving data from a search service.
-    
+
     """
-    
+
     @abstractmethod
     async def _get_single_object(self):
         pass
@@ -17,7 +17,10 @@ class AsyncSearchAbstract(ABC):
         pass
 
 
-elastic: AsyncElasticsearch = AsyncElasticsearch(hosts='http://localhost:9200/')
+elastic: AsyncElasticsearch = AsyncElasticsearch(
+    hosts='http://localhost:9200/'
+)
+
 
 async def get_elastic() -> AsyncElasticsearch:
     return elastic
