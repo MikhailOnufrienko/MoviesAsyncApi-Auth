@@ -50,7 +50,9 @@ class PersonService:
     ) -> tuple[int, list[PersonFull]]:
         """Returns a list of person data with filtering and sorting."""
 
-        total, data = await self._persons_from_cache(page, page_size, search_query)
+        total, data = await self._persons_from_cache(
+            page, page_size, search_query
+        )
 
         if not data:
             if search_query:
@@ -93,7 +95,9 @@ class PersonService:
                     )
                 )
             
-            await self._put_persons_to_cache(page, page_size, total, data, search_query)
+            await self._put_persons_to_cache(
+                page, page_size, total, data, search_query
+            )
 
         return total, data
 
@@ -102,25 +106,33 @@ class PersonService:
     ) -> tuple[int, list[PersonShortFilmInfo]]:
         """Data about films in which the person took part."""
 
-        try:
-            doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
-        except NotFoundError:
-            return []
+        total, films_data = await self._person_films_from_cache(person_id)
 
-        person = doc['_source']
-        films = await get_films(self.elastic, person['full_name'])
-        films_data = []
+        if not films_data:
 
-        for film in films:
+            try:
+                doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
+            except NotFoundError:
+                return []
 
-            obj = PersonShortFilmInfo(
-                id=film['id'],
-                title=film['title'],
-                imdb_rating=film['imdb_rating'],
-            )
-            films_data.append(obj)
+            person = doc['_source']
+            films = await get_films(self.elastic, person['full_name'])
+            films_data = []
 
-        return len(films), films_data
+            for film in films:
+
+                obj = PersonShortFilmInfo(
+                    id=film['id'],
+                    title=film['title'],
+                    imdb_rating=film['imdb_rating'],
+                )
+                films_data.append(obj)
+
+            total = len(films_data)
+
+            await self._put_person_films_to_cache(person_id, total, films_data)
+
+        return total, films_data
 
     async def _get_person_from_elastic(
         self, person_id: str
@@ -170,10 +182,32 @@ class PersonService:
             return 0, []
 
         persons_data = json.loads(data)
-        persons = [PersonFull.parse_raw(person) for person in persons_data['persons']]
+        persons = [
+            PersonFull.parse_raw(person) for person in persons_data['persons']
+        ]
         total = persons_data['total']
 
         return total, persons
+
+    async def _person_films_from_cache(self, person_id: str) -> tuple:
+        """Get person film list data from Redis cache."""
+
+        print('redis get')
+
+        cache_key = f'person_films:{person_id}'
+        data = await self.redis.get(cache_key)
+
+        if not data:
+            return 0, []
+    
+        films_data = json.loads(data)
+        films = [
+            PersonShortFilmInfo.parse_raw(film)
+            for film in films_data['person_films']
+        ]
+        total = films_data['total']
+
+        return total, films
 
     async def _put_person_to_cache(self, person: PersonFull) -> None:
         """Put person data into the Redis cache."""
@@ -197,6 +231,27 @@ class PersonService:
         data = {
             'total': total,
             'persons': [person.json() for person in persons]
+        }
+        json_str = json.dumps(data)
+
+        await self.redis.set(
+            cache_key,
+            json_str,
+            PERSON_CACHE_EXPIRE_IN_SECONDS
+        )
+    
+    async def _put_person_films_to_cache(
+        self, person_id: str, total: int, films: list[PersonShortFilmInfo]
+    ) -> None:
+        """Put person film list data into Redis cache."""
+
+        print('redis set')
+
+        cache_key = f'person_films:{person_id}'
+
+        data = {
+            'total': total,
+            'person_films': [film.json() for film in films]
         }
         json_str = json.dumps(data)
 
