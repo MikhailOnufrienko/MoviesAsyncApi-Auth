@@ -48,7 +48,11 @@ class ElasticService(AsyncSearchAbstract):
             ]
         )
 
-    async def _get_list_of_objects(self, query, page_size, from_page):
+    async def _get_list_of_objects(
+        self, query, page_size, from_page
+    ) -> tuple[int, list[PersonFull]]:
+        """Request to ElasticSearch to get a list of persons found
+           in accordance with the query."""
 
         response = await self.elastic.search(
             index=self.index_name, query=query, from_=from_page,
@@ -75,7 +79,6 @@ class ElasticService(AsyncSearchAbstract):
                     ]
                 )
             )
-        print(total, data)
         return total, data
 
 
@@ -96,7 +99,7 @@ class RedisService(AsyncCacheAbstract):
 
     async def _get_list_of_objects(
         self, page: int, size: int, query: str = None
-    ) -> tuple:
+    ) -> tuple[int, list[PersonFull]]:
         """Get person list data from Redis cache."""
 
         cache_key = f'persons:{page}:{size}:{query}'
@@ -104,7 +107,6 @@ class RedisService(AsyncCacheAbstract):
 
         if not data:
             return 0, []
-
         persons_data = json.loads(data)
         persons = [
             PersonFull.parse_raw(person) for person in persons_data['persons']
@@ -144,7 +146,9 @@ class RedisService(AsyncCacheAbstract):
             PERSON_CACHE_EXPIRE_IN_SECONDS
         )
 
-    async def _person_films_from_cache(self, person_id: str) -> tuple:
+    async def _person_films_from_cache(
+        self, person_id: str
+    ) -> tuple[int, list[PersonShortFilmInfo]]:
         """Get person film list data from Redis cache."""
 
         cache_key = f'person_films:{person_id}'
@@ -167,8 +171,6 @@ class RedisService(AsyncCacheAbstract):
     ) -> None:
         """Put person film list data into Redis cache."""
 
-        print('redis set')
-
         cache_key = f'person_films:{person_id}'
 
         data = {
@@ -176,7 +178,6 @@ class RedisService(AsyncCacheAbstract):
             'person_films': [film.json() for film in films]
         }
         json_str = json.dumps(data)
-
         await self.redis.set(
             cache_key,
             json_str,

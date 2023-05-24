@@ -1,5 +1,5 @@
 import json
-# import logging
+import logging
 from functools import lru_cache
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
@@ -50,7 +50,6 @@ class ElasticService(AsyncSearchAbstract):
             genres = [hits[i]['_source'] for i in range(search_query['size'])]
         except IndexError:
             genres = [hit['_source'] for hit in hits]
-
         return total, [Genre(**genre) for genre in genres]
 
 
@@ -103,7 +102,7 @@ class RedisService(AsyncCacheAbstract):
         page_size: int,
         total: int,
         genres: list[Genre]
-    ):
+    ) -> None:
         """Save genres to Redis cache.
 
         """
@@ -165,14 +164,15 @@ class GenreService:
                 "from": start_index,
                 "size": page_size
             }
-            total, genre_data = await es_service._get_list_of_objects(query)
+            try:
+                total, genre_data = await es_service._get_list_of_objects(query)
+            except Exception as exc:
+               logging.exception('An error occured: %s', exc)
             if not genre_data:
                 return 0, None
             await redis_service._put_list_of_objects(page, page_size,
                                                      total, genre_data)
             return total, genre_data
-#           except Exception as exc:
-#              logging.exception('An error occured: %s', exc)
         return total, genre_data
 
 

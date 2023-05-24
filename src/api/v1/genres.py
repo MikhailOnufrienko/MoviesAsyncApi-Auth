@@ -24,6 +24,11 @@ async def genre_list(
     """
     Return list of genres with parameters:
 
+    - **total**: total number of all genres
+    - **page**: current page number
+    - **size**: size of page
+    - **prev**: link to previous page
+    - **next**: link to next page
     - **results**: Genre object list
     """
 
