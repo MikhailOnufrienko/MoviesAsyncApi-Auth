@@ -234,7 +234,6 @@ class PersonService:
             else:
                 query = {"match_all": {}}
 
-#           data = []
             from_page = (page - 1) * page_size
 
             try:

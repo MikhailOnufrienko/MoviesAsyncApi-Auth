@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from api.v1.films import get_page_size
 
 from api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
                             PersonShortFilmInfoList)
@@ -33,10 +34,27 @@ async def person_list_search(
         page_size,
         query
     )
-    print(total)
+
+    if total == 0:
+        prev = None
+        next = None
+        size = None
+    else:
+        prev = (
+            f'/persons/search?query={query}&page_number={page_number-1}' if page_number > 1 else None
+        )
+        next = (
+            f'/persons/search?query={query}&page_number={page_number+1}'
+            if (page_number - 1) * page_size + len(objects) < total else None
+        )
+        size = get_page_size(page_number, total, page_size, next)
 
     return PersonList(
         total=total,
+        page=page_number,
+        size=size,
+        prev=prev,
+        next=next,
         results=[
             Person(
                 id=person.id,
