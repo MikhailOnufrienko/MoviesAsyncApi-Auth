@@ -11,7 +11,7 @@ from utils.constants import PERSON_NOT_FOUND
 router = APIRouter()
 
 
-@router.get('/search', response_model=PersonList, summary='Person lsit')
+@router.get('/search', response_model=PersonList, summary='Person list')
 async def person_list_search(
     person_service: PersonService = Depends(get_person_service),
     page_number: Annotated[
@@ -28,13 +28,15 @@ async def person_list_search(
     - **results**: list of persons
     """
 
-    objects = await person_service.get_person_list(
+    total, objects = await person_service.get_person_list(
         page_number,
         page_size,
         query
     )
+    print(total)
 
     return PersonList(
+        total=total,
         results=[
             Person(
                 id=person.id,
@@ -87,9 +89,10 @@ async def person_films_detail(
     - **results**: list of films
     """
 
-    films = await person_service.get_person_films_list(person_id)
+    total, films = await person_service.get_person_films_list(person_id)
 
     return PersonShortFilmInfoList(
+        total=total,
         results=[
             PersonShortFilmInfo(
                 id=film.id,

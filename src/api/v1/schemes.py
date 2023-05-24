@@ -79,6 +79,7 @@ class PersonShortFilmInfo(BaseModel):
 
 
 class PersonShortFilmInfoList(BaseModel):
+    total: int
     results: list[PersonShortFilmInfo]
 
 
@@ -89,4 +90,5 @@ class Person(BaseModel):
 
 
 class PersonList(BaseModel):
+    total: int
     results: list[Person]
