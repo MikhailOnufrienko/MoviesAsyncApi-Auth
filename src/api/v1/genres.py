@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from api.v1.films import get_page_size
+from utils.paginator_page_size_calc import get_page_size
 
 from api.v1.schemes import Genre, GenreList
 from services.genre import GenreService, get_genre_service
@@ -56,16 +56,6 @@ async def genre_list(
             "name": genre.name
         } for genre in genrelist] if total else []
     )
-
-#    genres = list(await genre_service.get_genre_list(page_number, page_size))
-
-#    return GenreList(
-#        results=[
-#            Genre(
-#                id=genre.id,
-#                name=genre.name,
-#            ) for genre in genres]
-#    )
 
 
 @router.get('/{genre_id}', response_model=Genre, summary='Genre detail')

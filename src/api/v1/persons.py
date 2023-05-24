@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from api.v1.films import get_page_size
+from utils.paginator_page_size_calc import get_page_size
 
 from api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
                             PersonShortFilmInfoList)
@@ -46,7 +46,8 @@ async def person_list_search(
         size = None
     else:
         prev = (
-            f'/persons/search?query={query}&page_number={page_number-1}' if page_number > 1 else None
+            f'/persons/search?query={query}&page_number={page_number-1}'
+            if page_number > 1 else None
         )
         next = (
             f'/persons/search?query={query}&page_number={page_number+1}'

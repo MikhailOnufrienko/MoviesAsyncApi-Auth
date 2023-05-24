@@ -47,12 +47,12 @@ class ElasticService(AsyncSearchAbstract):
                 ) for film in films_roles
             ]
         )
-    
+
     async def _get_list_of_objects(self, query, page_size, from_page):
-        
+
         response = await self.elastic.search(
-                    index=self.index_name, query=query, from_=from_page,
-                    size=page_size, sort=[{"id": {"order": "asc"}}]
+            index=self.index_name, query=query, from_=from_page,
+            size=page_size, sort=[{"id": {"order": "asc"}}]
         )
         total = response['hits']['total']['value']
         results = response['hits']['hits']
@@ -93,7 +93,7 @@ class RedisService(AsyncCacheAbstract):
             return None
 
         return PersonFull.parse_raw(data)
-    
+
     async def _get_list_of_objects(
         self, page: int, size: int, query: str = None
     ) -> tuple:
@@ -112,7 +112,7 @@ class RedisService(AsyncCacheAbstract):
         total = persons_data['total']
 
         return total, persons
-    
+
     async def _put_single_object(self, person: PersonFull) -> None:
         """Put person data into the Redis cache."""
 
@@ -146,14 +146,13 @@ class RedisService(AsyncCacheAbstract):
 
     async def _person_films_from_cache(self, person_id: str) -> tuple:
         """Get person film list data from Redis cache."""
- #       print('redis get')
 
         cache_key = f'person_films:{person_id}'
         data = await self.redis.get(cache_key)
 
         if not data:
             return 0, []
-    
+
         films_data = json.loads(data)
         films = [
             PersonShortFilmInfo.parse_raw(film)
@@ -162,7 +161,7 @@ class RedisService(AsyncCacheAbstract):
         total = films_data['total']
 
         return total, films
-    
+
     async def _put_person_films_to_cache(
         self, person_id: str, total: int, films: list[PersonShortFilmInfo]
     ) -> None:
@@ -242,7 +241,7 @@ class PersonService:
                 )
             except Exception as exc:
                 logging.exception('An error occured: %s', exc)
-            
+
             await redis_service._put_list_of_objects(
                 page, page_size, total, data, search_query
             )
@@ -254,10 +253,11 @@ class PersonService:
     ) -> tuple[int, list[PersonShortFilmInfo]]:
         """Data about films in which the person took part."""
 
-        total, films_data = await redis_service._person_films_from_cache(person_id)
+        total, films_data = await redis_service._person_films_from_cache(
+            person_id
+        )
 
         if not films_data:
-
             try:
                 doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
             except NotFoundError:
@@ -268,7 +268,6 @@ class PersonService:
             films_data = []
 
             for film in films:
-
                 obj = PersonShortFilmInfo(
                     id=film['id'],
                     title=film['title'],
@@ -278,8 +277,9 @@ class PersonService:
 
             total = len(films_data)
 
-            await redis_service._put_person_films_to_cache(person_id, total, films_data)
-
+            await redis_service._put_person_films_to_cache(
+                person_id, total, films_data
+            )
         return total, films_data
 
 

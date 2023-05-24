@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from api.v1.schemes import FilmFull, FilmList
 from services.film import FilmService, get_film_service
 from src.utils.constants import FILM_NOT_FOUND
+from utils.paginator_page_size_calc import get_page_size
 
 router = APIRouter()
 
@@ -156,18 +157,3 @@ async def film_details(
         writers=film.writers,
         directors=film.director,
     )
-
-
-def get_page_size(
-    page: int,
-    total: int,
-    size_default: int,
-    next: str | None
-) -> int:
-
-    if total >= size_default:
-        if next:
-            return size_default
-        else:
-            return total - size_default * (page - 1)
-    return total
