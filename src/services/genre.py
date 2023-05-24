@@ -95,6 +95,8 @@ class RedisService(AsyncCacheAbstract):
             genre.json(),
             GENRE_CACHE_EXPIRE_IN_SECONDS,
         )
+    
+    # async def _put_genres_to_cache()
 
     async def _put_list_of_objects(
         self,

@@ -16,7 +16,7 @@ async def get_films(elastic: AsyncElasticsearch, person_name: str) -> list:
                 },
                 {
                     "match_phrase": {
-                        "director": person_name
+                        "directors": person_name
                     }
                 },
                 {

@@ -2,108 +2,88 @@ from http import HTTPStatus
 
 import pytest
 from pytest_lazyfixture import lazy_fixture
+from tests.functional.utils import es_queries, parametrize
+from tests.functional.settings import test_settings
+import json
 
-from ..conftest import create_index
 
-
-@pytest.mark.parametrize(
-    'expected_answer, es_data',
-    [
-        (
-            10,
-            lazy_fixture('generate_es_data_genre')
-        ),
-    ]
-)
 @pytest.mark.asyncio
 async def test_get_all_genres(
-    es_client, es_write_data,
-    make_get_request, expected_answer, es_data
-):
-    """Test API of all genres list.
-
+    es_write_data: callable,
+    make_get_request: callable
+) -> None:
     """
-    await create_index(es_client)
-    await es_write_data(data=es_data, es_index='genres')
-    response = await make_get_request('genres')
-    assert len(response.body) == expected_answer
-    assert response.status == HTTPStatus.OK, f'{response.status} must be 200'
+    Sends a request to the genre API endpoint
+    and validates the given responses.
+    """
+
+    es_data = await es_queries.make_test_es_genres_data()
+    await es_write_data(es_data, test_settings.es_genre_index)
+
+    url = test_settings.service_url + 'genres/'
+    response = await make_get_request(url)
+    body, status = response.body, response.status
+
+    assert status == HTTPStatus.OK
+    assert len(body['results']) == 10
 
 
 @pytest.mark.parametrize(
-    'uuid_genre, expected_answer, es_data',
-    [
-        (
-            '9c91a5b2-eb70-4889-8581-ebe427370edd',
-            {'uuid': '120a21cf-9097-479e-904a-13dd7198c1dd',
-             'name': 'Adventure'},
-            lazy_fixture('generate_es_data_genre')
-        ),
-    ]
+    'genre_id, expected_answer',
+    parametrize.genre_detail_parameters
 )
 @pytest.mark.asyncio
 async def test_get_genre_by_id(
-    es_client, es_write_data,
-    make_get_request, uuid_genre,
-    expected_answer, es_data
+    es_write_data: callable,
+    make_get_request: callable,
+    genre_id: str,
+    expected_answer: dict
 ):
-    """Test API for genre details.
-
     """
-    await create_index(es_client)
-    await es_write_data(es_data, 'genres')
-    response = await make_get_request(f'genres/{uuid_genre}')
-    assert response.body == expected_answer
-    assert response.status == HTTPStatus.OK, f'{response.status} must be 200'
+    Sends a request to the genre detail API endpoint
+    and validates the given responses.
+    """
+
+    es_data = await es_queries.make_test_es_genres_data()
+    await es_write_data(es_data, test_settings.es_genre_index)
+
+    url = test_settings.service_url + f'genres/{genre_id}'
+    response = await make_get_request(url)
+    body, status = response.body, response.status
+
+    assert status == expected_answer['status']
+    assert body == expected_answer['response_body']
+
 
 
 @pytest.mark.parametrize(
-    'query_data, expected_answer',
-    [
-        (
-            {'uuid': '7283ch9k-4059-098r-751m-7dh490lk220n'},
-            HTTPStatus.NOT_FOUND
-        ),
-    ]
-)
-@pytest.mark.asyncio
-async def test_non_existing_genre(
-    make_get_request, query_data, expected_answer
-):
-    """Test API for a non-existing genre.
-
-    """
-    response = await make_get_request(f'genres/{query_data}')
-    assert expected_answer == response.status
-
-
-@pytest.mark.parametrize(
-    'expected_answer, es_data',
-    [
-        (
-            10,
-            lazy_fixture('generate_es_data_genre')
-        ),
-    ]
+    'genre_id, expected_answer',
+    [parametrize.genre_detail_parameters[0]]
 )
 @pytest.mark.asyncio
 async def test_genre_cache(
-        es_client, redis_client, es_write_data,
-        make_get_request, expected_answer, es_data
+    redis_client,
+    es_write_data,
+    make_get_request,
+    genre_id: str,
+    expected_answer: dict
 ):
-    """Test cache.
-
     """
-    await create_index(es_client)
-    await es_write_data(es_data, 'genres')
-    await redis_client.flushall(async_op=True)
-    keys = await redis_client.keys(pattern='*')
+    Sends a request to the genre detail API endpoint
+    and verifies that the Redis cache is working properly.
+    """
 
-    assert len(keys) == 0
+    # Check that current Redis cache is empty
+    assert await redis_client.keys('*') == []
 
-    response = await make_get_request('genres')
-    keys = await redis_client.keys(pattern='*')
+    es_data = await es_queries.make_test_es_genres_data()
+    await es_write_data(es_data, test_settings.es_genre_index)
 
-    assert len(keys) == 1
-    assert expected_answer == len(response.body)
-    assert response.status == HTTPStatus.OK, f'{response.status} must be 200'
+    url = test_settings.service_url + f'genres/{genre_id}'
+    await make_get_request(url)
+
+    redis_key = f'genre:{genre_id}'
+    data = json.loads(await redis_client.get(redis_key))
+
+    assert len(await redis_client.keys('*')) == 1
+    assert data == expected_answer['response_body']
