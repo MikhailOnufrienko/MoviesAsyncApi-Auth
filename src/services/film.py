@@ -1,133 +1,37 @@
-import json
 from functools import lru_cache
+import json
 from uuid import UUID
-
 from elasticsearch import AsyncElasticsearch, NotFoundError
-from fastapi import Depends
-from redis.asyncio import Redis
 
-from db.elastic import get_elastic
-from db.redis import get_redis
+from aioredis import Redis
+from fastapi import Depends
+
+from db.elastic import AsyncSearchAbstract, elastic, get_elastic
+from db.redis import AsyncCacheAbstract, redis, get_redis
 from models.models import FilmFull, FilmShort
+
 
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 minutes
 
 INDEX_NAME = 'movies'
 
 
-class FilmService:
-    """Class to represent films logic."""
-
-    def __init__(
-        self,
-        redis: Redis,
-        elastic: AsyncElasticsearch,
-        index_name: str
-    ):
-        self.redis = redis
+class ElasticService(AsyncSearchAbstract):
+    def __init__(self, elastic: AsyncElasticsearch, index_name: str):
         self.elastic = elastic
         self.index_name = index_name
 
-    async def get_films(
-            self,
-            page: int,
-            size: int,
-            genre: UUID
-    ) -> tuple[int, list[FilmShort]]:
-        """Retrieve films instances to list films
-        in accordance with filtration conditions.
+    async def _get_single_object(self, film_id: str) -> FilmFull | None:
+        """Retrieve a film instance from Elasticsearch DB.
 
         """
-        total, films = await self._films_from_cache(page, size, genre)
+        try:
+            doc = await self.elastic.get(index=self.index_name, id=film_id)
+        except NotFoundError:
+            return None
+        return FilmFull(**doc['_source'])
 
-        if not films:
-            start_index = (page - 1) * size
-            if not genre:
-                search_query = {
-                    "query": {
-                        "match_all": {}
-                    },
-                    "sort": [
-                        {
-                            "imdb_rating": {"order": "desc"}
-                        }
-                    ],
-                    "from": start_index,
-                    "size": size
-                }
-            else:
-                search_query = {
-                    "query": {
-                        "nested": {
-                            "path": "genres",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {"term": {"genres.id": genre}}
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "sort": [
-                        {
-                            "imdb_rating": {"order": "desc"}
-                        }
-                    ],
-                    "from": start_index,
-                    "size": size
-                }
-
-            total, films = await self._get_films_from_elastic(search_query)
-            if not films:
-                return 0, None
-            await self._put_films_to_cache(page, size, total, films, genre)
-            return total, films
-        # total = len(films)
-        return total, films
-
-    async def search_films(
-        self,
-        page: int,
-        size: int,
-        query: str
-    ) -> tuple[int, list[FilmShort]]:
-        """Retrieve films instances to list films
-        in accordance with search conditions.
-
-        """
-
-        total, films = await self._films_from_cache(page, size, query)
-
-        if not films:
-            start_index = (page - 1) * size
-            search_query = {
-                "query": {
-                    "match": {
-                        "title": query
-                    }
-                },
-                "sort": [
-                    {
-                        "_score": {"order": "desc"}
-                    },
-                    {
-                        "imdb_rating": {"order": "desc"}
-                    }
-                ],
-                "from": start_index,
-                "size": size
-            }
-
-            total, films = await self._get_films_from_elastic(search_query)
-            if not films:
-                return 0, None
-            await self._put_films_to_cache(page, size, total, films, query)
-            return total, films
-        # total = len(films)
-        return total, films
-
-    async def _get_films_from_elastic(
+    async def _get_list_of_objects(
         self,
         search_query: dict
     ) -> tuple[int, list[FilmShort]]:
@@ -151,30 +55,22 @@ class FilmService:
 
         return total, [FilmShort(**film) for film in films]
 
-    async def get_by_id(self, film_id: str) -> FilmFull | None:
-        """Return a film instance in accordance with ID given.
+
+class RedisService(AsyncCacheAbstract):
+    def __init__(self, redis: Redis):
+        self.redis = redis
+
+    async def _get_single_object(self, film_id: str) -> FilmFull | None:
+        """Retrieve a film instance from Redis cache.
 
         """
-        film = await self._film_from_cache(film_id)
-
-        if not film:
-            film = await self._get_film_from_elastic(film_id)
-            if not film:
-                return None
-            await self._put_film_to_cache(film)
-        return film
-
-    async def _get_film_from_elastic(self, film_id: str) -> FilmFull | None:
-        """Retrieve a film instance from Elasticsearch DB.
-
-        """
-        try:
-            doc = await self.elastic.get(index=self.index_name, id=film_id)
-        except NotFoundError:
+        cache_key = f'film:{film_id}'
+        data = await self.redis.get(cache_key)
+        if not data:
             return None
-        return FilmFull(**doc['_source'])
+        return FilmFull.parse_raw(data)
 
-    async def _films_from_cache(
+    async def _get_list_of_objects(
         self, page: int, size: int,
         query: str = None, genre: UUID = None
     ) -> tuple[int, list[FilmShort]]:
@@ -186,22 +82,14 @@ class FilmService:
 
         if not data:
             return 0, None
+
         films_data = json.loads(data)
         films = [FilmShort.parse_raw(film) for film in films_data['films']]
         total = films_data['total']
+
         return total, films
 
-    async def _film_from_cache(self, film_id: str) -> FilmFull | None:
-        """Retrieve a film instance from Redis cache.
-
-        """
-        cache_key = f'film:{film_id}'
-        data = await self.redis.get(cache_key)
-        if not data:
-            return None
-        return FilmFull.parse_raw(data)
-
-    async def _put_film_to_cache(self, film: FilmFull):
+    async def _put_single_object(self, film: FilmFull):
         """Save a film instance to Redis cache.
 
         """
@@ -213,7 +101,7 @@ class FilmService:
             FILM_CACHE_EXPIRE_IN_SECONDS
         )
 
-    async def _put_films_to_cache(
+    async def _put_list_of_objects(
         self,
         page: int,
         size: int,
@@ -231,12 +119,146 @@ class FilmService:
             'films': [film.json() for film in films]
         }
         json_str = json.dumps(data)
-        await self.redis.set(cache_key, json_str, FILM_CACHE_EXPIRE_IN_SECONDS)
+        await self.redis.set(cache_key, json_str,
+                             FILM_CACHE_EXPIRE_IN_SECONDS)
+
+
+redis_service = RedisService(redis)
+es_service = ElasticService(elastic, INDEX_NAME)
+
+
+class FilmService:
+    """Class to represent films logic."""
+
+    def __init__(
+            self,
+            rs: AsyncCacheAbstract,
+            es: AsyncSearchAbstract,
+            index_name: str
+    ):
+        self.redis_service = rs
+        self.elastic_service = es
+        self.index_name = index_name
+
+    async def get_films(
+            self,
+            page: int,
+            size: int,
+            genre: UUID
+    ) -> tuple[int, list[FilmShort]]:
+        """Retrieve films instances to list films
+        in accordance with filtration conditions.
+
+        """
+        total, films = await redis_service._get_list_of_objects(
+            page, size, genre
+        )
+
+        if not films:
+            start_index = (page - 1) * size
+            if not genre:
+                search_query = {
+                    "query": {
+                        "match_all": {}
+                    },
+                    "sort": [
+                        {
+                            "imdb_rating": {"order": "desc"}
+                        }
+                    ],
+                    "from": start_index,
+                    "size": size
+                }
+            else:
+                search_query = {
+                    "query": {
+                        "nested": {
+                            "path": "genre",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {"term": {"genre.id": genre}}
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "sort": [
+                        {
+                            "imdb_rating": {"order": "desc"}
+                        }
+                    ],
+                    "from": start_index,
+                    "size": size
+                }
+
+            total, films = await es_service._get_list_of_objects(search_query)
+            if not films:
+                return 0, None
+            await redis_service._put_list_of_objects(page, size,
+                                                     total, films, genre)
+            return total, films
+        return total, films
+
+    async def search_films(
+        self,
+        page: int,
+        size: int,
+        query: str
+    ) -> tuple[int, list[FilmShort]]:
+        """Retrieve films instances to list films
+        in accordance with search conditions.
+
+        """
+
+        total, films = await redis_service._get_list_of_objects(page,
+                                                                size, query)
+
+        if not films:
+            start_index = (page - 1) * size
+            search_query = {
+                "query": {
+                    "match": {
+                        "title": query
+                    }
+                },
+                "sort": [
+                    {
+                        "_score": {"order": "desc"}
+                    },
+                    {
+                        "imdb_rating": {"order": "desc"}
+                    }
+                ],
+                "from": start_index,
+                "size": size
+            }
+
+            total, films = await es_service._get_list_of_objects(search_query)
+            if not films:
+                return 0, None
+            await redis_service._put_list_of_objects(page, size,
+                                                     total, films, query)
+            return total, films
+        return total, films
+
+    async def get_by_id(self, film_id: str) -> FilmFull | None:
+        """Return a film instance in accordance with ID given.
+
+        """
+        film = await redis_service._get_single_object(film_id)
+
+        if not film:
+            film = await es_service._get_single_object(film_id)
+            if not film:
+                return None
+            await redis_service._put_single_object(film)
+        return film
 
 
 @lru_cache()
 def get_film_service(
-        redis: Redis = Depends(get_redis),
-        elastic: AsyncElasticsearch = Depends(get_elastic),
+        redis: RedisService = Depends(get_redis),
+        elastic: ElasticService = Depends(get_elastic),
 ) -> FilmService:
     return FilmService(redis, elastic, INDEX_NAME)
