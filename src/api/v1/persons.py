@@ -26,6 +26,11 @@ async def person_list_search(
     """
     Return person list by query:
 
+    - **total**: total number of all persons found
+    - **page**: current page number
+    - **size**: size of page
+    - **prev**: link to previous page
+    - **next**: link to next page
     - **results**: list of persons
     """
 
@@ -104,6 +109,7 @@ async def person_films_detail(
     """
     Return list of films in which the person participated:
 
+    - **total**: total number of all films related to the person selected
     - **results**: list of films
     """
 
