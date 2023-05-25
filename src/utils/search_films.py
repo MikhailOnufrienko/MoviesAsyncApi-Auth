@@ -29,10 +29,15 @@ async def get_films(elastic: AsyncElasticsearch, person_name: str) -> list:
     }
 
     films = await elastic.search(index="movies", query=query_movies)
+    try:
+        total = films['hits']['total']['value']
+    except Exception as exc:
+        total = 0
+        print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 
     movie_data = [film['_source'] for film in films['hits']['hits']]
 
-    return movie_data
+    return total, movie_data
 
 
 async def get_roles(films: list, person_name: str) -> list:

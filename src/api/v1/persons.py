@@ -116,6 +116,11 @@ async def person_films_detail(
 
     total, films = await person_service.get_person_films_list(person_id)
 
+    if not films:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail=PERSON_NOT_FOUND
+        )
+
     return PersonShortFilmInfoList(
         total=total,
         results=[

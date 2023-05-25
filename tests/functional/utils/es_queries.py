@@ -2,7 +2,10 @@ import json
 import uuid
 
 
-async def make_test_es_movie_data(existing_query: str) -> list:
+async def make_test_es_movie_data(
+    existing_film_query: str,
+    existing_person_query: str
+) -> list:
     """Create test data for ElasticSearch."""
 
     film_ids = [
@@ -19,7 +22,7 @@ async def make_test_es_movie_data(existing_query: str) -> list:
                 'description': 'Exciting and unusual experience.',
             }
         ],
-        'title': existing_query,
+        'title': existing_film_query,
         'description': 'New World',
         'directors': [
             {
@@ -27,28 +30,42 @@ async def make_test_es_movie_data(existing_query: str) -> list:
                 'name': 'Main Director'
             }
         ],
-        'actors_names': ['Ann', 'Bob'],
+        'actors_names': [existing_person_query, 'Bob'],
         'writers_names': ['Ben', 'Howard'],
         'actors': [
-            {'id': '111', 'name': 'Ann'},
-            {'id': '222', 'name': 'Bob'}
+            {
+                'id': '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
+                'name': existing_person_query
+            },
+            {
+                'id': '222',
+                'name': 'Bob'
+            }
         ],
         'writers': [
-            {'id': '333', 'name': 'Ben'},
-            {'id': '444', 'name': 'Howard'}
+            {
+                'id': '333',
+                'name': 'Ben'
+            },
+            {
+                'id': '444',
+                'name': 'Howard'
+            }
         ],
     } for i in range(50)]
 
 
-async def make_test_es_persons_data(existing_query: str) -> list:
+async def make_test_es_persons_data(
+    existing_single_query: str, existing_multiple_query: str
+) -> list:
     """Create test data for ElasticSearch."""
 
     return [{
         'id': str(uuid.uuid4()),
-        'full_name': existing_query,
+        'full_name': existing_multiple_query,
     } for _ in range(20)] + [{
         'id': '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
-        'full_name': existing_query,
+        'full_name': existing_single_query,
     }]
 
 

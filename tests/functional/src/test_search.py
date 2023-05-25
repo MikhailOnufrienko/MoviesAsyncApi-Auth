@@ -22,7 +22,8 @@ async def test_films_search_response(
     """
 
     es_data = await es_queries.make_test_es_movie_data(
-        existing_query=parametrize.FILM_QUERY_EXIST
+        existing_film_query=parametrize.FILM_QUERY_EXIST,
+        existing_person_query=parametrize.PERSON_SINGLE_QUERY_EXIST
     )
     await es_write_data(es_data, test_settings.es_movie_index)
 
@@ -64,7 +65,8 @@ async def test_persons_search_response(
     """
 
     es_data = await es_queries.make_test_es_persons_data(
-        existing_query=parametrize.PERSON_QUERY_EXIST
+        existing_single_query=parametrize.PERSON_SINGLE_QUERY_EXIST,
+        existing_multiple_query=parametrize.PERSON_MULTIPLE_QUERY_EXIST
     )
     await es_write_data(es_data, test_settings.es_person_index)
 
@@ -77,8 +79,9 @@ async def test_persons_search_response(
     assert (body['next'] is not None) == expected_answer['has_next_page']
 
     if expected_answer['has_next_page'] is True:
+
         query_data = {
-            'query': parametrize.PERSON_QUERY_EXIST,
+            'query': parametrize.PERSON_SINGLE_QUERY_EXIST,
             'page_number': 2,
             'page_size': 10
         }
@@ -103,7 +106,8 @@ async def test_films_search_redis_cache(
     assert await redis_client.keys('*') == []
 
     es_data = await es_queries.make_test_es_movie_data(
-        existing_query=parametrize.FILM_QUERY_EXIST
+        existing_film_query=parametrize.FILM_QUERY_EXIST,
+        existing_person_query=parametrize.PERSON_SINGLE_QUERY_EXIST
     )
     await es_write_data(es_data, test_settings.es_movie_index)
 
@@ -126,11 +130,16 @@ async def test_films_search_redis_cache(
     assert len(data['films']) == 10
 
 
+@pytest.mark.parametrize(
+    'query_data, expected_answer',
+    parametrize.person_search_parameters
+)
 @pytest.mark.asyncio
 async def test_persons_search_redis_cache(
     redis_client: redis.Redis,
     make_get_request: callable,
-    es_write_data: callable
+    es_write_data: callable,
+    query_data, expected_answer
 ) -> None:
     """
     Sends a request to the person API endpoint with a search query
@@ -141,16 +150,17 @@ async def test_persons_search_redis_cache(
     assert await redis_client.keys('*') == []
 
     es_data = await es_queries.make_test_es_persons_data(
-        existing_query=parametrize.PERSON_QUERY_EXIST
+        existing_single_query=parametrize.PERSON_SINGLE_QUERY_EXIST,
+        existing_multiple_query=parametrize.PERSON_MULTIPLE_QUERY_EXIST
     )
     await es_write_data(es_data, test_settings.es_person_index)
 
     url = test_settings.service_url + 'persons/search'
-    query_data = {
-        'query': parametrize.PERSON_QUERY_EXIST,
-        'page_number': 1,
-        'page_size': 10
-    }
+    # query_data = {
+    #     'query': 'Name Name',
+    #     'page_number': 1,
+    #     'page_size': 10
+    # }
     query, page, size = query_data.values()
 
     await make_get_request(url, query_data)
@@ -160,5 +170,4 @@ async def test_persons_search_redis_cache(
     data = json.loads(data)
 
     assert data is not None
-    assert data['total'] == 21
-    assert len(data['persons']) == 10
+    assert data['total'] == expected_answer['length']
