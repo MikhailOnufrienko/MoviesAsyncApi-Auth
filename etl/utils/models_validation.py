@@ -5,10 +5,14 @@ from pydantic import BaseModel
 
 
 class UUIDMixin(BaseModel):
-    id: str
+    """Mixin with id field."""
+
+    id: uuid.UUID
 
 
 class ModifiedMixin(BaseModel):
+    """Mixin with modified field."""
+
     modified: datetime
 
 
@@ -34,6 +38,7 @@ class PGPersonFilmworkModel(UUIDMixin, ModifiedMixin):
 
 class ESPersonModel(UUIDMixin):
     """A model for Elasticsearch person instances."""
+
     name: str | None
 
 
@@ -41,8 +46,15 @@ class ESGenreAndFilmModel(UUIDMixin):
     name: str
 
 
+class ESFullPersonModel(UUIDMixin):
+    """A model for Elasticsearch full person instances."""
+
+    full_name: str
+
+
 class ESFilmworkModel(UUIDMixin):
     """A model for Elasticsearch filmwork instances."""
+
     imdb_rating: float | None
     genres: list[ESGenreAndFilmModel] | None
     title: str
@@ -59,6 +71,7 @@ class PGGenreAndFilmModel(UUIDMixin, ModifiedMixin):
     description: str | None
 
 
-class Person(BaseModel):
-    id: uuid.UUID
+class PGPFullersonModel(UUIDMixin, ModifiedMixin):
+    """A model for PostgreSQL full person instances."""
+
     full_name: str
