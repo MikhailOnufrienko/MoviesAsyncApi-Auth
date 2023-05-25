@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 from elasticsearch import AsyncElasticsearch
 
+from core.config import settings
+
 
 class AsyncSearchAbstract(ABC):
     """An abstract class for retrieving data from a search service.
@@ -18,7 +20,11 @@ class AsyncSearchAbstract(ABC):
 
 
 elastic: AsyncElasticsearch = AsyncElasticsearch(
-    hosts='http://elastic_search:9200/'
+    [{
+        'scheme': settings.ELASTIC_SCHEME,
+        'host': settings.ELASTIC_HOST,
+        'port': settings.ELASTIC_PORT
+    }]
 )
 
 

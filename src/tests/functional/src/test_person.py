@@ -1,11 +1,10 @@
-import aiohttp
-import pytest
-from pytest_lazyfixture import lazy_fixture
-
-from tests.functional.utils import es_queries, parametrize
-from tests.functional.settings import test_settings
-import redis.asyncio as redis
 import json
+
+import pytest
+import redis.asyncio as redis
+
+from tests.functional.settings import test_settings
+from tests.functional.utils import es_queries, parametrize
 
 
 @pytest.mark.parametrize(

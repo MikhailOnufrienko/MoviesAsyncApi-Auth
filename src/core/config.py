@@ -12,12 +12,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
-    REDIS_HOST: str = Field('redis', env='REDIS_HOST')
-    REDIS_PORT: int = Field(6379, env='REDIS_PORT')
-    ELASTIC_SCHEME: str = Field('http', env='ELASTIC_SCHEME')
-    ELASTIC_HOST: str = Field('elastic_search', env='ELASTIC_HOST')
-    ELASTIC_PORT: int = Field(9200, env='ELASTIC_PORT')
-    PROJECT_NAME: str = Field('movies', env='PROJECT_NAME')
+    PROJECT_NAME: str = Field(env='PROJECT_NAME')
+
+    REDIS_HOST: str = Field(env='REDIS_HOST')
+    REDIS_PORT: int = Field(env='REDIS_PORT')
+
+    ELASTIC_SCHEME: str = Field(env='ELASTIC_SCHEME')
+    ELASTIC_HOST: str = Field(env='ELASTIC_HOST')
+    ELASTIC_PORT: int = Field(env='ELASTIC_PORT')
+
+    ES_MOVIE_INDEX: str
+    ES_GENRE_INDEX: str
+    ES_PERSON_INDEX: str
+
+    REDIS_CACHE_EXPIRES_IN_SECONDS = 60 * 5
 
     class Config:
         env_file = '.env'

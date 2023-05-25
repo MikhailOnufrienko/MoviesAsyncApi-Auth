@@ -4,18 +4,17 @@ from functools import lru_cache
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
-from redis.asyncio import Redis
 
-from db.elastic import get_elastic, AsyncSearchAbstract, elastic
-from db.redis import get_redis, AsyncCacheAbstract, redis
+from core.config import settings
+from db.elastic import AsyncSearchAbstract, elastic, get_elastic
+from db.redis import AsyncCacheAbstract, get_redis, redis
 from models.film import FilmPersonRoles, PersonShortFilmInfo
 from models.person import PersonFull
+from redis.asyncio import Redis
 from utils.search_films import get_films, get_roles
 
-
-PERSON_CACHE_EXPIRE_IN_SECONDS = 60 * 5
-
-INDEX_NAME = 'persons'
+PERSON_CACHE_EXPIRE_IN_SECONDS = settings.REDIS_CACHE_EXPIRES_IN_SECONDS
+INDEX_NAME = settings.ES_PERSON_INDEX
 
 
 class ElasticService(AsyncSearchAbstract):

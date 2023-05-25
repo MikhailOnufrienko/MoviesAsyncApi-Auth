@@ -2,9 +2,11 @@ import time
 
 from redis import Redis
 
+from ..settings import test_settings
+
 
 if __name__ == '__main__':
-    redis_client = Redis(host='redis', port=6379)
+    redis_client = Redis(host=test_settings.redis_host)
 
     while True:
         print('trying to access elastic redis')

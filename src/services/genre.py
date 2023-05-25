@@ -4,15 +4,15 @@ from functools import lru_cache
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
-from redis.asyncio import Redis
-from db.elastic import AsyncSearchAbstract, get_elastic, elastic
+
+from core.config import settings
+from db.elastic import AsyncSearchAbstract, elastic, get_elastic
 from db.redis import AsyncCacheAbstract, get_redis, redis
-
 from models.genre import Genre
+from redis.asyncio import Redis
 
-GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5
-
-INDEX_NAME = 'genres'
+GENRE_CACHE_EXPIRE_IN_SECONDS = settings.REDIS_CACHE_EXPIRES_IN_SECONDS
+INDEX_NAME = settings.ES_GENRE_INDEX
 
 
 class ElasticService(AsyncSearchAbstract):
@@ -95,8 +95,6 @@ class RedisService(AsyncCacheAbstract):
             genre.json(),
             GENRE_CACHE_EXPIRE_IN_SECONDS,
         )
-    
-    # async def _put_genres_to_cache()
 
     async def _put_list_of_objects(
         self,
@@ -169,7 +167,7 @@ class GenreService:
             try:
                 total, genre_data = await es_service._get_list_of_objects(query)
             except Exception as exc:
-               logging.exception('An error occured: %s', exc)
+                logging.exception('An error occured: %s', exc)
             if not genre_data:
                 return 0, None
             await redis_service._put_list_of_objects(page, page_size,

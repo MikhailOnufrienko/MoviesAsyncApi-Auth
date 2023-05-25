@@ -1,5 +1,6 @@
 from elasticsearch import AsyncElasticsearch
 
+from core.config import settings
 from models.film import FilmPersonRoles
 
 
@@ -28,7 +29,11 @@ async def get_films(elastic: AsyncElasticsearch, person_name: str) -> list:
         }
     }
 
-    films = await elastic.search(index="movies", query=query_movies)
+    films = await elastic.search(
+        index=settings.ES_MOVIE_INDEX,
+        query=query_movies
+    )
+
     try:
         total = films['hits']['total']['value']
     except Exception:

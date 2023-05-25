@@ -1,9 +1,10 @@
-import pytest
-
-from tests.functional.utils import es_queries, parametrize
-from tests.functional.settings import test_settings
-import redis.asyncio as redis
 import json
+
+import pytest
+import redis.asyncio as redis
+
+from tests.functional.settings import test_settings
+from tests.functional.utils import es_queries, parametrize
 
 
 @pytest.mark.parametrize(
@@ -29,7 +30,7 @@ async def test_films_by_genre_response(
     )
     await es_write_data(es_data, test_settings.es_movie_index)
 
-    url = test_settings.service_url + f'films/'
+    url = test_settings.service_url + 'films/'
     response = await make_get_request(url, query_data)
     body, status = response.body, response.status
 
@@ -100,14 +101,14 @@ async def test_films_by_genre_redis_cache(
     )
     await es_write_data(es_data, test_settings.es_movie_index)
 
-    url = test_settings.service_url + f'films/'
+    url = test_settings.service_url + 'films/'
     query_data = {
         'genre': '120a21cf-9097-479e-904a-13dd7198c1dd',
         'page_number': 1,
         'page_size': 10
     }
     genre_id, page, size = query_data.values()
-    
+
     await make_get_request(url, query_data)
 
     redis_key = f'films:{page}:{size}:{genre_id}:None'
@@ -147,7 +148,7 @@ async def test_film_detail_cache(
 
     url = test_settings.service_url + f'films/{film_id}'
     await make_get_request(url)
-    
+
     redis_key = f'film:{film_id}'
     data = json.loads(await redis_client.get(redis_key))
 

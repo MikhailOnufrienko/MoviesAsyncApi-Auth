@@ -1,10 +1,10 @@
+import json
 from http import HTTPStatus
 
 import pytest
-from pytest_lazyfixture import lazy_fixture
-from tests.functional.utils import es_queries, parametrize
+
 from tests.functional.settings import test_settings
-import json
+from tests.functional.utils import es_queries, parametrize
 
 
 @pytest.mark.asyncio
@@ -53,7 +53,6 @@ async def test_get_genre_by_id(
 
     assert status == expected_answer['status']
     assert body == expected_answer['response_body']
-
 
 
 @pytest.mark.parametrize(

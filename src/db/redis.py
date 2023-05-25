@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 from redis.asyncio import Redis
 
+from core.config import settings
+
 
 class AsyncCacheAbstract(ABC):
     """An abstract class for sending data to
@@ -25,7 +27,7 @@ class AsyncCacheAbstract(ABC):
         pass
 
 
-redis: Redis = Redis(host='redis', port=6379)
+redis: Redis = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
 
 async def get_redis() -> Redis:

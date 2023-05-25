@@ -2,9 +2,11 @@ import time
 
 from elasticsearch import Elasticsearch
 
+from ..settings import test_settings
+
 
 if __name__ == '__main__':
-    es_client = Elasticsearch(hosts='http://elastic_search:9200')
+    es_client = Elasticsearch(hosts=test_settings.es_host)
 
     while True:
         print('trying to access elastic search')

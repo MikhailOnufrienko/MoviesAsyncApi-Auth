@@ -1,20 +1,18 @@
-from functools import lru_cache
 import json
+from functools import lru_cache
 from uuid import UUID
-from elasticsearch import AsyncElasticsearch, NotFoundError
 
-# from aioredis import Redis
-from redis.asyncio import Redis
+from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 
+from core.config import settings
 from db.elastic import AsyncSearchAbstract, elastic, get_elastic
-from db.redis import AsyncCacheAbstract, redis, get_redis
+from db.redis import AsyncCacheAbstract, get_redis, redis
 from models.models import FilmFull, FilmShort
+from redis.asyncio import Redis
 
-
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 minutes
-
-INDEX_NAME = 'movies'
+FILM_CACHE_EXPIRE_IN_SECONDS = settings.REDIS_CACHE_EXPIRES_IN_SECONDS
+INDEX_NAME = settings.ES_MOVIE_INDEX
 
 
 class ElasticService(AsyncSearchAbstract):
