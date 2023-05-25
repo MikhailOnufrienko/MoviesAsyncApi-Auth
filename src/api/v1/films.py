@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.schemes import FilmFull, FilmList
 from services.film import FilmService, get_film_service
-from src.utils.constants import FILM_NOT_FOUND
+from utils.constants import FILM_NOT_FOUND
 from utils.paginator_page_size_calc import get_page_size
 
 router = APIRouter()

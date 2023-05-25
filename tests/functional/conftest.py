@@ -93,7 +93,7 @@ def es_delete_indices(es_client: AsyncElasticsearch) -> callable:
 async def delete_es_data(es_client: AsyncElasticsearch) -> None:
     """Clear ElasticSearch indices data after each test."""
 
-    indices_names = ['movies', 'genres', 'person_index']
+    indices_names = ['movies', 'genres', 'persons']
     query = {'match_all': {}}
 
     for index_name in indices_names:

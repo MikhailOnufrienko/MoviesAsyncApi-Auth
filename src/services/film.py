@@ -174,11 +174,11 @@ class FilmService:
                 search_query = {
                     "query": {
                         "nested": {
-                            "path": "genre",
+                            "path": "genres",
                             "query": {
                                 "bool": {
                                     "filter": [
-                                        {"term": {"genre.id": genre}}
+                                        {"term": {"genres.id": genre}}
                                     ]
                                 }
                             }

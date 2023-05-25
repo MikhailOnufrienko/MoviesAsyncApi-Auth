@@ -9,7 +9,7 @@ class TestSettings(BaseSettings):
         'http://127.0.0.1:8000/api/v1/', env='SERVICE_URL'
     )
     es_movie_index: str = 'movies'
-    es_person_index: str = 'person_index'
+    es_person_index: str = 'persons'
     es_genre_index: str = 'genres'
     es_id_field: str = 'id'
 

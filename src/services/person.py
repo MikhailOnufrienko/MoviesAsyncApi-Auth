@@ -56,7 +56,7 @@ class ElasticService(AsyncSearchAbstract):
 
         response = await self.elastic.search(
             index=self.index_name, query=query, from_=from_page,
-            size=page_size, sort=[{"id": {"order": "asc"}}]
+            size=page_size
         )
         total = response['hits']['total']['value']
         results = response['hits']['hits']
@@ -262,7 +262,7 @@ class PersonService:
             try:
                 doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
             except NotFoundError:
-                return []
+                return 0, []
 
             person = doc['_source']
             total, films = await get_films(self.elastic, person['full_name'])
