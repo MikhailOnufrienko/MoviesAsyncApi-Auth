@@ -30,28 +30,32 @@ def backoff(
     """
 
     def func_wrapper(func):
+
         @wraps(func)
         def inner(*args, **kwargs):
-            attempt = 0
-            time_out = start_sleep_time
+            """Function Body."""
+
+            attempts = 0
+
             while True:
+                sleep_time = min(
+                    border_sleep_time, start_sleep_time * factor ** attempts
+                )
+
                 try:
-                    attempt += 1
-                    connection = func(*args, **kwargs)
-                    return connection
-                except Exception as e:
-                    logger.error('Error message: %s', e)
-                    if attempt == max_attempts:
-                        raise e
+                    return func(*args, **kwargs)
+                except Exception as exc:
+                    if attempts == max_attempts:
+                        raise exc
 
-                    if time_out >= border_sleep_time:
-                        time_out = border_sleep_time
-                    else:
-                        time_out += start_sleep_time * (2 ** factor)
-
+                    attempts += 1
+                    logger.error('Error message: %s', exc)
                     logger.warning(
-                        'Waiting for %s seconds, then a new attempt', time_out)
-                    time.sleep(time_out)
+                        'Waiting for %s seconds, then a new attempt',
+                        sleep_time
+                    )
+                    time.sleep(sleep_time)
 
         return inner
+
     return func_wrapper
