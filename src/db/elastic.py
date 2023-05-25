@@ -1,8 +1,26 @@
+from abc import ABC, abstractmethod
+
 from elasticsearch import AsyncElasticsearch
 
-es: AsyncElasticsearch = AsyncElasticsearch(hosts='http://localhost:9200/')
+
+class AsyncSearchAbstract(ABC):
+    """An abstract class for retrieving data from a search service.
+
+    """
+
+    @abstractmethod
+    async def _get_single_object(self):
+        pass
+
+    @abstractmethod
+    async def _get_list_of_objects(self):
+        pass
 
 
-# Функция понадобится при внедрении зависимостей
+elastic: AsyncElasticsearch = AsyncElasticsearch(
+    hosts='http://localhost:9200/'
+)
+
+
 async def get_elastic() -> AsyncElasticsearch:
-    return es
+    return elastic

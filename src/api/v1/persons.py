@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from utils.paginator_page_size_calc import get_page_size
 
 from api.v1.schemes import (Person, PersonList, PersonShortFilmInfo,
                             PersonShortFilmInfoList)
@@ -11,7 +12,7 @@ from utils.constants import PERSON_NOT_FOUND
 router = APIRouter()
 
 
-@router.get('/search', response_model=PersonList, summary='Person lsit')
+@router.get('/search', response_model=PersonList, summary='Person list')
 async def person_list_search(
     person_service: PersonService = Depends(get_person_service),
     page_number: Annotated[
@@ -25,6 +26,11 @@ async def person_list_search(
     """
     Return person list by query:
 
+    - **total**: total number of all persons found
+    - **page**: current page number
+    - **size**: size of page
+    - **prev**: link to previous page
+    - **next**: link to next page
     - **results**: list of persons
     """
 
@@ -37,29 +43,22 @@ async def person_list_search(
     if total == 0:
         prev = None
         next = None
+        size = None
     else:
         prev = (
-            f'/persons/search?&page_number={page_number - 1}'
-            f'&page_size={page_size}'
+            f'/persons/search?query={query}&page_number={page_number-1}'
+            if page_number > 1 else None
         )
-        prev += f'query={query}' if query else ''
-
-        if page_number <= 1:
-            prev = None
-
         next = (
-            f'/persons/search?&page_number={page_number + 1}'
-            f'&page_size={page_size}'
+            f'/persons/search?query={query}&page_number={page_number+1}'
+            if (page_number - 1) * page_size + len(objects) < total else None
         )
-        next += f'query={query}' if query else ''
+        size = get_page_size(page_number, total, page_size, next)
 
-        if (page_number - 1) * page_size + len(objects) >= total:
-            next = None
-
-    obj = PersonList(
+    return PersonList(
         total=total,
         page=page_number,
-        size=len(objects),
+        size=size,
         prev=prev,
         next=next,
         results=[
@@ -70,8 +69,6 @@ async def person_list_search(
             ) for person in objects
         ]
     )
-
-    return obj
 
 
 @router.get('/{person_id}', response_model=Person, summary='Person detail')
@@ -113,6 +110,7 @@ async def person_films_detail(
     """
     Return list of films in which the person participated:
 
+    - **total**: total number of all films related to the person selected
     - **results**: list of films
     """
 

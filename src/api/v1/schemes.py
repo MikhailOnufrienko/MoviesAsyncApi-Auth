@@ -60,6 +60,11 @@ class Genre(BaseModel):
 
 
 class GenreList(BaseModel):
+    total: int
+    page: int
+    size: int | None
+    prev: str | None
+    next: str | None
     results: list[Genre]
 
 
@@ -88,7 +93,7 @@ class Person(BaseModel):
 class PersonList(BaseModel):
     total: int
     page: int
-    size: int
+    size: int | None
     prev: str | None
     next: str | None
     results: list[Person]

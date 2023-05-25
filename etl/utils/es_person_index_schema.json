@@ -45,11 +45,9 @@
       "id": {
         "type": "keyword"
       },
-      "name": {
-        "type": "text"
-      },
-      "description": {
-        "type": "text"
+      "full_name": {
+        "type": "text",
+        "analyzer": "ru_en"
       }
     }
   }

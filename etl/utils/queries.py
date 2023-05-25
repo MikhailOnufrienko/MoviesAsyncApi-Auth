@@ -1,11 +1,14 @@
+import datetime
+
 from etl.utils.settings import etl_settings
 
 
-def get_modified_genres(timestamp: int) -> str:
-    """A query to get genres which were
-    modified during the given period of time.
-
+def get_modified_genres(timestamp: datetime) -> str:
     """
+    A query to get genres which were
+    modified during the given period of time.
+    """
+
     return """
         SELECT id, modified
         FROM content.genre
@@ -15,11 +18,23 @@ def get_modified_genres(timestamp: int) -> str:
         """.format(timestamp, etl_settings.LIMIT)
 
 
-def get_modified_persons(timestamp) -> str:
-    """A query to get persons which were
-    modified during the given period of time.
+def get_persons(timestamp: datetime) -> str:
+    """A query to get persons modified."""
 
+    return """
+            SELECT person.id, person.full_name, person.modified
+            FROM content.person person
+            WHERE person.modified > '{}'
+            ORDER BY person.modified DESC;
+        """.format(timestamp)
+
+
+def get_modified_persons(timestamp: datetime) -> str:
     """
+    A query to get persons which were
+    modified during the given period of time.
+    """
+
     return """
         SELECT id, modified
         FROM content.person
@@ -29,11 +44,12 @@ def get_modified_persons(timestamp) -> str:
         """.format(timestamp, etl_settings.LIMIT)
 
 
-def get_modified_filmworks(timestamp) -> str:
-    """A query to get filmworks which were
-    modified during the given period of time.
-
+def get_modified_filmworks(timestamp: datetime) -> str:
     """
+    A query to get filmworks which were
+    modified during the given period of time.
+    """
+
     return """
         SELECT id, modified
         FROM content.film_work
@@ -44,40 +60,40 @@ def get_modified_filmworks(timestamp) -> str:
 
 
 def get_modified_filmworks_by_persons(persons: list) -> str:
-    """A query to get filmworks which have persons modified.
+    """A query to get filmworks which have persons modified."""
 
-    """
-    condition = f'IN {tuple(persons)}' if len(
-        persons) > 1 else f'= "{persons[0]}"'
+    condition = (f'IN {tuple(persons)}' if len(persons) > 1
+                 else f'= "{persons[0]}"')
+
     return """
-    SELECT fw.id, fw.modified
-    FROM content.film_work fw
-    LEFT JOIN content.person_film_work pfw ON pfw.film_work_id = fw.id
-    WHERE pfw.person_id {}
-    ORDER BY fw.modified;
-    """.format(condition)
+        SELECT fw.id, fw.modified
+        FROM content.film_work fw
+        LEFT JOIN content.person_film_work pfw ON pfw.film_work_id = fw.id
+        WHERE pfw.person_id {}
+        ORDER BY fw.modified;
+        """.format(condition)
 
 
 def get_modified_filmworks_by_genres(genres: list) -> str:
-    """A query to get filmworks which have genres modified.
+    """A query to get filmworks which have genres modified."""
 
-    """
-    condition = f'IN {tuple(genres)}' if len(
-        genres) > 1 else f'= "{genres[0]}"'
+    condition = (f'IN {tuple(genres)}' if len(genres) > 1
+                 else f'= "{genres[0]}"')
+
     return """
-    SELECT fw.id, fw.modified
-    FROM content.film_work fw
-    LEFT JOIN content.genre_film_work gfw ON gfw.film_work_id = fw.id
-    WHERE gfw.genre_id {}
-    ORDER BY fw.modified;
-    """.format(condition)
+        SELECT fw.id, fw.modified
+        FROM content.film_work fw
+        LEFT JOIN content.genre_film_work gfw ON gfw.film_work_id = fw.id
+        WHERE gfw.genre_id {}
+        ORDER BY fw.modified;
+        """.format(condition)
 
 
 def get_filmwork_by_id(ids: tuple) -> str:
-    """A query to get modified filmworks and their attributes.
+    """A query to get modified filmworks and their attributes."""
 
-    """
     condition = f'IN {tuple(ids)}' if len(ids) > 1 else f'= "{ids[0]}"'
+
     return """
         SELECT
             fw.id as fw_id,
@@ -101,10 +117,9 @@ def get_filmwork_by_id(ids: tuple) -> str:
         """.format(condition)
 
 
-def get_genres(timestamp) -> str:
-    """A query to get genres modified.
+def get_genres(timestamp: datetime) -> str:
+    """A query to get genres modified."""
 
-    """
     return """
         SELECT
             genre.id,
@@ -120,16 +135,4 @@ def get_genres(timestamp) -> str:
         WHERE genre.modified > '{}'
         GROUP BY genre.id
         ORDER by genre.modified;
-        """.format(timestamp)
-
-
-def get_persons(timestamp) -> str:
-    """A query to get persons modified.
-
-    """
-    return """
-            SELECT p.id, p.full_name
-            FROM person p
-            WHERE p.modified > '{}'
-            ORDER BY p.modified DESC;
         """.format(timestamp)
