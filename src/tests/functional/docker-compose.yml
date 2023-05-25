@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+
+  fastapi:
+    build: ../../../src
+    image: fastapi-image
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - elastic_search
+    env_file:
+      - ../../../.env
+
+  tests:
+    image: fastapi-image
+    depends_on:
+      - fastapi
+    entrypoint: >
+      sh -c "pip install -r requirements.txt
+      && python3 /src/tests/functional/utils/wait_for_es.py
+      && python3 /src/tests/functional/utils/wait_for_redis.py
+      && pytest /src/tests/"
+  
+  elastic_search:
+    image: ghcr.io/yp-middle-python-24/elasticsearch:8.7.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms500m -Xmx500m"
+    ports:
+      - "9200:9200"
+    env_file:
+      - ../../../.env
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    env_file:
+      - ../../../.env

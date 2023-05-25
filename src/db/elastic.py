@@ -18,7 +18,7 @@ class AsyncSearchAbstract(ABC):
 
 
 elastic: AsyncElasticsearch = AsyncElasticsearch(
-    hosts='http://localhost:9200/'
+    hosts='http://elastic_search:9200/'
 )
 
 

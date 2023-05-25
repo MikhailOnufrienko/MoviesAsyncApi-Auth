@@ -25,7 +25,7 @@ class AsyncCacheAbstract(ABC):
         pass
 
 
-redis: Redis = Redis()
+redis: Redis = Redis(host='redis', port=6379)
 
 
 async def get_redis() -> Redis:

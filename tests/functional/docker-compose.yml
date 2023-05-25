@@ -7,13 +7,11 @@ services:
     image: fastapi-image
     env_file:
       - ../../.env
-    networks:
-      - etl_api_network
 
   tests:
     image: fastapi-image
     entrypoint: >
-      sh -c "pip install -r /tests/functional/requirements.txt
-      && python3 /tests/functional/utils/wait_for_es.py
-      && python3 /tests/functional/utils/wait_for_redis.py
-      && pytest /tests/functional/src"
+      sh -c "pip install -r requirements.txt
+      && python3 ../utils/wait_for_es.py
+      && python3 ../utils/wait_for_redis.py
+      && pytest"
