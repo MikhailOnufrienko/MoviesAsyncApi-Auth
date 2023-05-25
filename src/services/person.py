@@ -15,7 +15,7 @@ from utils.search_films import get_films, get_roles
 
 PERSON_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
-INDEX_NAME = 'person_index'
+INDEX_NAME = 'persons'
 
 
 class ElasticService(AsyncSearchAbstract):
@@ -23,118 +23,7 @@ class ElasticService(AsyncSearchAbstract):
         self.elastic = elastic
         self.index_name = index_name
 
-# <<<<<<< test_persons
-#     async def get_by_id(self, person_id: str) -> PersonFull | None:
-#         """Returns data about the person by his id."""
-
-#         person = await self._person_from_cache(person_id)
-
-#         if not person:
-#             person = await self._get_person_from_elastic(person_id)
-
-#             if not person:
-#                 return None
-
-#             await self._put_person_to_cache(person)
-
-#         return person
-
-#     async def get_person_list(
-#         self, page: int, page_size: int, search_query: str | None
-#     ) -> tuple[int, list[PersonFull]]:
-#         """Returns a list of person data with filtering and sorting."""
-
-#         total, data = await self._persons_from_cache(
-#             page, page_size, search_query
-#         )
-
-#         if not data:
-#             if search_query:
-#                 query = {
-#                     "match_phrase_prefix": {
-#                         "full_name": search_query
-#                     }
-#                 }
-#             else:
-#                 query = {"match_all": {}}
-
-#             data = []
-#             from_page = (page - 1) * page_size
-
-#             try:
-#                 response = await self.elastic.search(
-#                     index=self.index_name, query=query, from_=from_page,
-#                     size=page_size, sort=[{"id": {"order": "asc"}}]
-#                 )
-#                 total = response['hits']['total']['value']
-#                 results = response['hits']['hits']
-#             except Exception as exc:
-#                 logging.exception('An error occured: %s', exc)
-
-#             for item in results:
-#                 person = item['_source']
-#                 _, films = await get_films(self.elastic, person['full_name'])
-#                 films_roles = await get_roles(films, person['full_name'])
-
-#                 data.append(
-#                     PersonFull(
-#                         id=person['id'],
-#                         full_name=person['full_name'],
-#                         films=[
-#                             FilmPersonRoles(
-#                                 id=film.id,
-#                                 roles=film.roles,
-#                             ) for film in films_roles
-#                         ]
-#                     )
-#                 )
-            
-#             await self._put_persons_to_cache(
-#                 page, page_size, total, data, search_query
-#             )
-
-#         return total, data
-
-#     async def get_person_films_list(
-#         self, person_id: str
-#     ) -> tuple[int, list[PersonShortFilmInfo]]:
-#         """Data about films in which the person took part."""
-
-#         try:
-#             doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
-#         except NotFoundError:
-#             return 0, None
-
-#         total, films_data = await self._person_films_from_cache(person_id)
-
-#         if not films_data:
-
-#             try:
-#                 doc = await self.elastic.get(index=INDEX_NAME, id=person_id)
-#             except NotFoundError:
-#                 return []
-
-#             person = doc['_source']
-#             total, films = await get_films(self.elastic, person['full_name'])
-#             films_data = []
-
-#             for film in films:
-
-#                 obj = PersonShortFilmInfo(
-#                     id=film['id'],
-#                     title=film['title'],
-#                     imdb_rating=film['imdb_rating'],
-#                 )
-#                 films_data.append(obj)
-
-#             await self._put_person_films_to_cache(person_id, total, films_data)
-
-#         return total, films_data
-
-#     async def _get_person_from_elastic(
-# =======
     async def _get_single_object(
-# >>>>>>> main
         self, person_id: str
     ) -> PersonFull | None:
         """Request to ElasticSearch to get person data."""
@@ -176,7 +65,7 @@ class ElasticService(AsyncSearchAbstract):
         data = []
         for item in results:
             person = item['_source']
-            films = await get_films(self.elastic, person['full_name'])
+            _, films = await get_films(self.elastic, person['full_name'])
             films_roles = await get_roles(films, person['full_name'])
             data.append(
                 PersonFull(
@@ -376,7 +265,7 @@ class PersonService:
                 return []
 
             person = doc['_source']
-            films = await get_films(self.elastic, person['full_name'])
+            total, films = await get_films(self.elastic, person['full_name'])
             films_data = []
 
             for film in films:
@@ -387,7 +276,7 @@ class PersonService:
                 )
                 films_data.append(obj)
 
-            total = len(films_data)
+            # total = len(films_data)
 
             await redis_service._put_person_films_to_cache(
                 person_id, total, films_data
