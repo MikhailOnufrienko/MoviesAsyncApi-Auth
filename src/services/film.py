@@ -3,7 +3,8 @@ import json
 from uuid import UUID
 from elasticsearch import AsyncElasticsearch, NotFoundError
 
-from aioredis import Redis
+# from aioredis import Redis
+from redis.asyncio import Redis
 from fastapi import Depends
 
 from db.elastic import AsyncSearchAbstract, elastic, get_elastic
