@@ -1,16 +1,17 @@
 import time
 
-from elasticsearch import Elasticsearch
+from elasticsearch import ConnectionError, Elasticsearch
 
-from ..settings import test_settings
+from src.tests.functional.utils.backoff import backoff
+from src.tests.functional.settings import test_settings
+
+
+@backoff(ConnectionError)
+def check_elastic_conn(client: Elasticsearch):
+    if not client.ping():
+        raise ConnectionError
 
 
 if __name__ == '__main__':
-    es_client = Elasticsearch(hosts=test_settings.es_host)
-
-    while True:
-        print('trying to access elastic search')
-        if es_client.ping():
-            break
-        print('elastic search connection error')
-        time.sleep(1)
+    es_client = Elasticsearch(hosts=test_settings.es_host, request_timeout=300)
+    check_elastic_conn(es_client)

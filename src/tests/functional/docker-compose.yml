@@ -21,7 +21,7 @@ services:
       sh -c "pip install -r requirements.txt
       && python3 /src/tests/functional/utils/wait_for_es.py
       && python3 /src/tests/functional/utils/wait_for_redis.py
-      && pytest /src/tests/"
+      && pytest /src/tests/functional/"
   
   elastic_search:
     image: ghcr.io/yp-middle-python-24/elasticsearch:8.7.0
