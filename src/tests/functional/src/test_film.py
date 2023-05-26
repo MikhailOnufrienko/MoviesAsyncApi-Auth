@@ -2,6 +2,7 @@ import json
 
 import pytest
 import redis.asyncio as redis
+import requests
 
 from tests.functional.settings import test_settings
 from tests.functional.utils import es_queries, parametrize
@@ -154,3 +155,20 @@ async def test_film_detail_cache(
 
     assert len(await redis_client.keys('*')) == 1
     assert data == expected_answer['response_body']
+
+
+@pytest.mark.parametrize(
+    'query_data, expected_status',
+    parametrize.films_by_genre_invalid_parameters
+)
+@pytest.mark.asyncio
+def test_films_by_genre_invalid_request(query_data, expected_status):
+    """
+    Sends a request to the film API endpoint with wrong parameters
+    and validates the given responses.
+    """
+
+    url = test_settings.service_url + 'films/'
+    response = requests.get(url, params=query_data)
+
+    assert response.status_code == expected_status

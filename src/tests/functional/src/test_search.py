@@ -2,6 +2,7 @@ import json
 
 import pytest
 import redis.asyncio as redis
+import requests
 
 from tests.functional.settings import test_settings
 from tests.functional.utils import es_queries, parametrize
@@ -171,3 +172,20 @@ async def test_persons_search_redis_cache(
 
     assert data is not None
     assert data['total'] == expected_answer['length']
+
+
+@pytest.mark.parametrize(
+    'url, query_data, expected_status',
+    parametrize.persons_invalid_parameters
+)
+@pytest.mark.asyncio
+def test_search_invalid_request(url, query_data, expected_status):
+    """
+    Sends a request to the persons and films API endpoint
+    with wrong parameters and validates the given responses.
+    """
+
+    url = test_settings.service_url + url
+    response = requests.get(url, params=query_data)
+
+    assert response.status_code == expected_status

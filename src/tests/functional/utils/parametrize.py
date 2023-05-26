@@ -66,6 +66,23 @@ films_by_genre_parameters = [
             'length': 0,
             'has_next_page': False
         }
+    ),
+]
+
+
+films_by_genre_invalid_parameters = [
+    (
+        {
+            'page_number': 'not_an_integer',
+            'page_size': 'not_an_integer'
+        },
+        HTTPStatus.BAD_REQUEST
+    ),
+    (
+        {
+            'genre': 1234567890
+        },
+        HTTPStatus.BAD_REQUEST
     )
 ]
 
@@ -204,6 +221,26 @@ person_search_parameters = [
 ]
 
 
+persons_invalid_parameters = [
+    (
+        'persons/search',
+        {
+            'page_number': 'not_an_integer',
+            'page_size': 'not_an_integer'
+        },
+        HTTPStatus.BAD_REQUEST
+    ),
+    (
+        'films/search',
+        {
+            'page_number': 'not_an_integer',
+            'page_size': 'not_an_integer'
+        },
+        HTTPStatus.BAD_REQUEST
+    ),
+]
+
+
 person_films_parameters = [
     (
         '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
@@ -242,6 +279,17 @@ person_detail_parameters = [
             'full_name': PERSON_QUERY_NOT_EXIST,
             'length': 0,
         }
+    )
+]
+
+
+genres_invalid_parameters = [
+    (
+        {
+            'page_number': 'not_an_integer',
+            'page_size': 'not_an_integer'
+        },
+        HTTPStatus.BAD_REQUEST
     )
 ]
 

@@ -172,7 +172,7 @@ PERSONS_INDEX_SETTINGS = {
 
 
 index_to_schema = {
-    'person_index': PERSONS_INDEX_SETTINGS,
+    'persons': PERSONS_INDEX_SETTINGS,
     'genres': GENRES_INDEX_SETTINGS,
     'movies': MOVIES_INDEX_SETTINGS
 }
