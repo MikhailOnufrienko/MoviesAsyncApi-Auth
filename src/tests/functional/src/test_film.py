@@ -2,16 +2,19 @@ import json
 
 import pytest
 import redis.asyncio as redis
+import requests_async as requests
 
 from tests.functional.settings import test_settings
 from tests.functional.utils import es_queries, parametrize
+
+
+pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.parametrize(
     'genre_id, query_data, expected_answer',
     parametrize.films_by_genre_parameters
 )
-@pytest.mark.asyncio
 async def test_films_by_genre_response(
     es_write_data: callable,
     make_get_request: callable,
@@ -55,7 +58,6 @@ async def test_films_by_genre_response(
     'film_id, expected_answer',
     parametrize.film_detail_parameters
 )
-@pytest.mark.asyncio
 async def test_film_detail_response(
     es_write_data: callable,
     make_get_request: callable,
@@ -81,7 +83,6 @@ async def test_film_detail_response(
     assert body == expected_answer['response_body']
 
 
-@pytest.mark.asyncio
 async def test_films_by_genre_redis_cache(
     redis_client: redis.Redis,
     make_get_request: callable,
@@ -124,7 +125,6 @@ async def test_films_by_genre_redis_cache(
     'film_id, expected_answer',
     [parametrize.film_detail_parameters[0]]
 )
-@pytest.mark.asyncio
 async def test_film_detail_cache(
     redis_client: redis.Redis,
     es_write_data,
@@ -154,3 +154,19 @@ async def test_film_detail_cache(
 
     assert len(await redis_client.keys('*')) == 1
     assert data == expected_answer['response_body']
+
+
+@pytest.mark.parametrize(
+    'query_data, expected_status',
+    parametrize.films_by_genre_invalid_parameters
+)
+async def test_films_by_genre_invalid_request(query_data, expected_status):
+    """
+    Sends a request to the film API endpoint with wrong parameters
+    and validates the given responses.
+    """
+
+    url = test_settings.service_url + 'films/'
+    response = await requests.get(url, params=query_data)
+
+    assert response.status_code == expected_status

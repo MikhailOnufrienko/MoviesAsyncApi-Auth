@@ -16,6 +16,8 @@ INDEX_NAME = settings.ES_GENRE_INDEX
 
 
 class ElasticService(AsyncSearchAbstract):
+    """Class to represent search engine with ElasticSearch."""
+
     def __init__(self, elastic: AsyncElasticsearch, index_name: str):
         self.elastic = elastic
         self.index_name = index_name
@@ -31,11 +33,13 @@ class ElasticService(AsyncSearchAbstract):
         return Genre(**doc['_source'])
 
     async def _get_list_of_objects(
-            self,
-            search_query: dict
+        self,
+        search_query: dict
     ) -> tuple[int, list[Genre]]:
-        """Request to ElasticSearch to get a list of genres
-        and total number of genres."""
+        """
+        Request to ElasticSearch to get a list of genres
+        and total number of genres.
+        """
 
         result = await self.elastic.search(
             index=self.index_name,
@@ -46,14 +50,18 @@ class ElasticService(AsyncSearchAbstract):
 
         if not hits:
             return total, []
+
         try:
             genres = [hits[i]['_source'] for i in range(search_query['size'])]
         except IndexError:
             genres = [hit['_source'] for hit in hits]
+
         return total, [Genre(**genre) for genre in genres]
 
 
 class RedisService(AsyncCacheAbstract):
+    """Class to represent cache service with Redis."""
+
     def __init__(self, redis: Redis):
         self.redis = redis
 
@@ -69,16 +77,18 @@ class RedisService(AsyncCacheAbstract):
         return Genre.parse_raw(data)
 
     async def _get_list_of_objects(
-            self, page: int, page_size: int
+        self,
+        page: int,
+        page_size: int
     ) -> tuple[int, list[Genre]]:
-        """Retrieve genres from Redis cache.
+        """Retrieve genres from Redis cache."""
 
-        """
         cache_key = f'genres:{page}:{page_size}'
         data = await self.redis.get(cache_key)
 
         if not data:
             return 0, None
+
         genres_data = json.loads(data)
         films = [Genre.parse_raw(genre) for genre in genres_data['genres']]
         total = genres_data['total']
@@ -103,31 +113,33 @@ class RedisService(AsyncCacheAbstract):
         total: int,
         genres: list[Genre]
     ) -> None:
-        """Save genres to Redis cache.
+        """Save genres to Redis cache."""
 
-        """
         cache_key = f'genres:{page}:{page_size}'
         data = {
             'total': total,
             'genres': [genre.json() for genre in genres]
         }
         json_str = json.dumps(data)
-        await self.redis.set(cache_key, json_str,
-                             GENRE_CACHE_EXPIRE_IN_SECONDS)
+
+        await self.redis.set(
+            cache_key, json_str, GENRE_CACHE_EXPIRE_IN_SECONDS
+        )
 
 
-redis_service = RedisService(redis)
-es_service = ElasticService(elastic, INDEX_NAME)
+cache_service = RedisService(redis)
+search_service = ElasticService(elastic, INDEX_NAME)
 
 
 class GenreService:
+    """Class to represent genres logic."""
 
     def __init__(
-        self, elastic: AsyncSearchAbstract,
-        redis: AsyncCacheAbstract, index_name: str
-    ):
-        """GenreService class initializing."""
-
+        self,
+        elastic: AsyncSearchAbstract,
+        redis: AsyncCacheAbstract,
+        index_name: str
+    ) -> None:
         self.elastic = elastic
         self.redis = redis
         self.index_name = index_name
@@ -135,44 +147,53 @@ class GenreService:
     async def get_by_id(self, genre_id: str) -> Genre | None:
         """Returns data about the genre by its id."""
 
-        genre = await redis_service._get_single_object(genre_id)
+        genre = await cache_service._get_single_object(genre_id)
 
         if not genre:
-            genre = await es_service._get_single_object(genre_id)
+            genre = await search_service._get_single_object(genre_id)
 
             if not genre:
                 return None
 
-            await redis_service._put_single_object(genre)
+            await cache_service._put_single_object(genre)
 
         return genre
 
     async def get_genre_list(
-            self, page: int, page_size: int
+        self,
+        page: int,
+        page_size: int
     ) -> tuple[int, list[Genre]]:
         """Returns a list of genre data."""
 
-        total, genre_data = await redis_service._get_list_of_objects(
+        total, genre_data = await cache_service._get_list_of_objects(
             page, page_size
         )
+
         if not genre_data:
             start_index = (page - 1) * page_size
             query = {
-                "query": {
-                    "match_all": {}
-                },
+                "query": {"match_all": {}},
                 "from": start_index,
                 "size": page_size
             }
+
             try:
-                total, genre_data = await es_service._get_list_of_objects(query)
+                total, genre_data = await search_service._get_list_of_objects(
+                    query
+                )
             except Exception as exc:
                 logging.exception('An error occured: %s', exc)
+
             if not genre_data:
                 return 0, None
-            await redis_service._put_list_of_objects(page, page_size,
-                                                     total, genre_data)
+
+            await cache_service._put_list_of_objects(
+                page, page_size, total, genre_data
+            )
+
             return total, genre_data
+
         return total, genre_data
 
 

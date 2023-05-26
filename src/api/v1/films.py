@@ -48,7 +48,8 @@ async def filmlist(
         size = None
     else:
         prev = (
-            f'/films?genre={genre}&page_number={page_number-1}' if page_number > 1 else None
+            f'/films?genre={genre}&page_number={page_number-1}'
+            if page_number > 1 else None
         )
         next = (
             f'/films?genre={genre}&page_number={page_number+1}'

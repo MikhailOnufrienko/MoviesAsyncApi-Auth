@@ -1,16 +1,17 @@
 import time
 
-from redis import Redis
+from redis import ConnectionError, Redis
 
-from ..settings import test_settings
+from src.tests.functional.utils.backoff import backoff
+from src.tests.functional.settings import test_settings
+
+
+@backoff(ConnectionError)
+def check_redis_conn(client: Redis):
+    if not client.ping():
+        raise ConnectionError
 
 
 if __name__ == '__main__':
     redis_client = Redis(host=test_settings.redis_host)
-
-    while True:
-        print('trying to access elastic redis')
-        if redis_client.ping():
-            break
-        print('redis connection error')
-        time.sleep(1)
+    check_redis_conn(redis_client)

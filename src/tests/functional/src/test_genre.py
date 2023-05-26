@@ -2,12 +2,15 @@ import json
 from http import HTTPStatus
 
 import pytest
+import requests_async as requests
 
 from tests.functional.settings import test_settings
 from tests.functional.utils import es_queries, parametrize
 
 
-@pytest.mark.asyncio
+# pytestmark = pytest.mark.asyncio
+
+
 async def test_get_all_genres(
     es_write_data: callable,
     make_get_request: callable
@@ -32,7 +35,6 @@ async def test_get_all_genres(
     'genre_id, expected_answer',
     parametrize.genre_detail_parameters
 )
-@pytest.mark.asyncio
 async def test_get_genre_by_id(
     es_write_data: callable,
     make_get_request: callable,
@@ -59,7 +61,6 @@ async def test_get_genre_by_id(
     'genre_id, expected_answer',
     [parametrize.genre_detail_parameters[0]]
 )
-@pytest.mark.asyncio
 async def test_genre_cache(
     redis_client,
     es_write_data,
@@ -86,3 +87,19 @@ async def test_genre_cache(
 
     assert len(await redis_client.keys('*')) == 1
     assert data == expected_answer['response_body']
+
+
+@pytest.mark.parametrize(
+    'query_data, expected_status',
+    parametrize.genres_invalid_parameters
+)
+async def test_genres_invalid_request(query_data, expected_status):
+    """
+    Sends a request to the genres API endpoint with wrong parameters
+    and validates the given responses.
+    """
+
+    url = test_settings.service_url + 'genres/'
+    response = await requests.get(url, params=query_data)
+
+    assert response.status_code == expected_status

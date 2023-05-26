@@ -3,7 +3,7 @@ from logging import config as logging_config
 
 from pydantic import BaseSettings, Field
 
-from core.logger import LOGGING
+from src.core.logger import LOGGING
 
 
 logging_config.dictConfig(LOGGING)
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     REDIS_CACHE_EXPIRES_IN_SECONDS = 60 * 5
 
     class Config:
-        env_file = '.env'
+        env_file = BASE_DIR / '.env'
 
 
 settings = Settings()
