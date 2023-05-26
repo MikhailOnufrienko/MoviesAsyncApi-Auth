@@ -7,11 +7,13 @@ from tests.functional.settings import test_settings
 from tests.functional.utils import es_queries, parametrize
 
 
+pytestmark = pytest.mark.asyncio
+
+
 @pytest.mark.parametrize(
     'person_id, expected_answer',
     parametrize.person_films_parameters
 )
-@pytest.mark.asyncio
 async def test_person_film_list_response(
     es_write_data: callable,
     make_get_request: callable,
@@ -49,7 +51,6 @@ async def test_person_film_list_response(
     'person_id, expected_answer,',
     parametrize.person_detail_parameters
 )
-@pytest.mark.asyncio
 async def test_get_person_by_id(
     es_write_data: callable,
     make_get_request: callable,
@@ -88,7 +89,6 @@ async def test_get_person_by_id(
     'person_id, expected_answer',
     [parametrize.person_films_parameters[0]]
 )
-@pytest.mark.asyncio
 async def test_person_film_list_redis_cache(
     redis_client: redis.Redis,
     es_write_data: callable,
@@ -133,7 +133,6 @@ async def test_person_film_list_redis_cache(
     'person_id, expected_answer',
     [parametrize.person_detail_parameters[0]]
 )
-@pytest.mark.asyncio
 async def test_get_person_by_id_redis_cache(
     redis_client: redis.Redis,
     es_write_data: callable,

@@ -2,17 +2,19 @@ import json
 
 import pytest
 import redis.asyncio as redis
-import requests
+import requests_async as requests
 
 from tests.functional.settings import test_settings
 from tests.functional.utils import es_queries, parametrize
+
+
+pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.parametrize(
     'query_data, expected_answer',
     parametrize.film_search_parameters
 )
-@pytest.mark.asyncio
 async def test_films_search_response(
     es_write_data: callable, make_get_request: callable,
     query_data: dict, expected_answer: dict
@@ -53,7 +55,6 @@ async def test_films_search_response(
     'query_data, expected_answer',
     parametrize.person_search_parameters
 )
-@pytest.mark.asyncio
 async def test_persons_search_response(
     es_write_data: callable,
     make_get_request: callable,
@@ -92,7 +93,6 @@ async def test_persons_search_response(
         assert body['prev'] is not None
 
 
-@pytest.mark.asyncio
 async def test_films_search_redis_cache(
     redis_client: redis.Redis,
     make_get_request: callable,
@@ -135,7 +135,6 @@ async def test_films_search_redis_cache(
     'query_data, expected_answer',
     parametrize.person_search_parameters
 )
-@pytest.mark.asyncio
 async def test_persons_search_redis_cache(
     redis_client: redis.Redis,
     make_get_request: callable,
@@ -178,14 +177,13 @@ async def test_persons_search_redis_cache(
     'url, query_data, expected_status',
     parametrize.persons_invalid_parameters
 )
-@pytest.mark.asyncio
-def test_search_invalid_request(url, query_data, expected_status):
+async def test_search_invalid_request(url, query_data, expected_status):
     """
     Sends a request to the persons and films API endpoint
     with wrong parameters and validates the given responses.
     """
 
     url = test_settings.service_url + url
-    response = requests.get(url, params=query_data)
+    response = await requests.get(url, params=query_data)
 
     assert response.status_code == expected_status
