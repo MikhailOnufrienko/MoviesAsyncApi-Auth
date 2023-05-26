@@ -9,15 +9,18 @@ PERSON_MULTIPLE_QUERY_EXIST = 'Multiple Name'
 PERSON_QUERY_NOT_EXIST = 'Person Not-Exist'
 
 
+DEFAULT_PAGE_SIZE = 10
+
+
 film_search_parameters = [
     (
         {
             'query': FILM_QUERY_EXIST,
             'page_number': 1,
-            'page_size': 10
+            'page_size': DEFAULT_PAGE_SIZE
         },
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'length': 50,
             'has_next_page': True
         }
@@ -26,10 +29,10 @@ film_search_parameters = [
         {
             'query': FILM_QUERY_NOT_EXIST,
             'page_number': 1,
-            'page_size': 10
+            'page_size': DEFAULT_PAGE_SIZE
         },
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'length': 0,
             'has_next_page': False
         }
@@ -43,10 +46,10 @@ films_by_genre_parameters = [
         {
             'genre': '120a21cf-9097-479e-904a-13dd7198c1dd',
             'page_number': 1,
-            'page_size': 10
+            'page_size': DEFAULT_PAGE_SIZE
         },
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'length': 50,
             'has_next_page': True
         }
@@ -56,10 +59,10 @@ films_by_genre_parameters = [
         {
             'genre': '111a11a1-1111-111a-111a-11aa1111a1aa',
             'page_number': 1,
-            'page_size': 10
+            'page_size': DEFAULT_PAGE_SIZE
         },
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'length': 0,
             'has_next_page': False
         }
@@ -166,10 +169,10 @@ person_search_parameters = [
         {
             'query': PERSON_SINGLE_QUERY_EXIST,
             'page_number': 1,
-            'page_size': 10
+            'page_size': DEFAULT_PAGE_SIZE
         },
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'length': 1,
             'has_next_page': False
         }
@@ -178,10 +181,10 @@ person_search_parameters = [
         {
             'query': PERSON_MULTIPLE_QUERY_EXIST,
             'page_number': 1,
-            'page_size': 10
+            'page_size': DEFAULT_PAGE_SIZE
         },
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'length': 20,
             'has_next_page': True
         }
@@ -190,10 +193,10 @@ person_search_parameters = [
         {
             'query': PERSON_QUERY_NOT_EXIST,
             'page_number': 1,
-            'page_size': 10
+            'page_size': DEFAULT_PAGE_SIZE
         },
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'length': 0,
             'has_next_page': False
         }
@@ -205,15 +208,15 @@ person_films_parameters = [
     (
         '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'length': 50,
-            'body_length': 10,
+            'body_length': 10
         }
     ),
     (
         '22b22b2b-2222-222b-b222-2bb2bb2b22b2',
         {
-            'status': 404,
+            'status': HTTPStatus.NOT_FOUND,
             'length': 0,
             'body_length': 0,
         }
@@ -225,7 +228,7 @@ person_detail_parameters = [
     (
         '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
         {
-            'status': 200,
+            'status': HTTPStatus.OK,
             'id': '32b50c6b-4907-292f-b652-6ef2ee8b43f8',
             'full_name': PERSON_SINGLE_QUERY_EXIST,
             'length': 10
@@ -234,7 +237,7 @@ person_detail_parameters = [
     (
         '22b22b2b-2222-222b-b222-2bb2bb2b22b2',
         {
-            'status': 404,
+            'status': HTTPStatus.NOT_FOUND,
             'id': '22b22b2b-2222-222b-b222-2bb2bb2b22b2',
             'full_name': PERSON_QUERY_NOT_EXIST,
             'length': 0,

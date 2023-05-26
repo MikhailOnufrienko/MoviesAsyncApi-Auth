@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     REDIS_CACHE_EXPIRES_IN_SECONDS = 60 * 5
 
     class Config:
-        env_file = '.env'
+        env_file = BASE_DIR / '.env'
 
 
 settings = Settings()

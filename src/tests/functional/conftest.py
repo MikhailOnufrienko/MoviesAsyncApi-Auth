@@ -33,7 +33,7 @@ async def session_client():
 
 @pytest.fixture(scope='function')
 async def redis_client():
-    client = redis.Redis(host=test_settings.redis_host)
+    client = redis.Redis(host='localhost', port=6379)
     await client.flushdb()
     yield client
     await client.flushall()
