@@ -14,4 +14,4 @@ db.session.commit()
 
 # Select-запросы
 User.query.all()
-User.query.filter_by(login='admin').first() 
+User.query.filter_by(login='admin').first()
