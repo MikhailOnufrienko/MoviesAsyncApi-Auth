@@ -3,8 +3,11 @@ import jwt
 import datetime
 from auth.db.db import db
 from os import environ
-from auth.db.db_models import User
-from flask_bcrypt import generate_password_hash
+from auth.db.db_models import LoginHistory, User
+from flask import jsonify, request
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_refresh_token
+from werkzeug.security import check_password_hash, generate_password_hash
 from utils.common import generate_response, TokenGenerator
 from utils.validation import (
     CreateLoginInputSchema, CreateRegisterInputSchema, ResetPasswordInputSchema,
@@ -49,26 +52,30 @@ def login_user(request, input_data):
     :param input_data: The data that is passed to the function
     :return: A dictionary with the keys: data, message, status
     """
+    
+    print(request)
     create_validation_schema = CreateLoginInputSchema()
     errors = create_validation_schema.validate(input_data)
     if errors:
         return generate_response(message=errors)
 
-    get_user = User.query.filter_by(login=input_data.get("login")).first()
-    if get_user is None:
+    user = User.query.filter_by(login=input_data.get("login")).first()
+    
+    if user is None:
         return generate_response(message="User not found", status=HTTP_400_BAD_REQUEST)
-    if get_user.check_password(input_data.get("password")):
-        token = jwt.encode(
-            {
-                "id": get_user.id,
-                "username": get_user.username,
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
-            },
-            environ.get("SECRET_KEY"),
-        )
-        input_data["token"] = token
+    
+    hash = generate_password_hash(user.password)
+    if check_password_hash(hash, user.password):
+        access_token = create_access_token(identity=user.id, fresh=True)
+        refresh_token = create_refresh_token(identity=user.id)
+
+        user_agent = request.headers['user_agent']
+        add_record_to_login_history(user, user_agent) # add a record to the login history
+
+        data = dict(access_token=access_token,refresh_token=refresh_token)
+
         return generate_response(
-            data=input_data, message="User login successfully", status=HTTP_201_CREATED
+            data=data, message="User login successfully", status=HTTP_201_CREATED
         )
     else:
         return generate_response(
@@ -99,3 +106,12 @@ def reset_password(request, input_data, token):
     return generate_response(
         message="New password successfully set.", status=HTTP_200_OK
     )
+
+
+def add_record_to_login_history(user: User, user_agent: str):
+    
+    new_session = LoginHistory(user_id=user.id,
+                               user_agent=user_agent,
+                               auth_date=datetime.now())
+    db.session.add(new_session)
+    db.session.commit()

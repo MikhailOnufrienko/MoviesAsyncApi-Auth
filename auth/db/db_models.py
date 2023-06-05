@@ -5,6 +5,7 @@ from flask_bcrypt import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
 from auth.db.db import db
+from sqlalchemy import ForeignKey
 
 
 class User(db.Model):
@@ -51,3 +52,18 @@ class User(db.Model):
         :return: The password is being returned.
         """
         return check_password_hash(self.password, password)
+
+
+class LoginHistory(db.Model):
+    __tablename__: str = 'user_auth'
+
+    id = db.Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False
+    )
+    user_id = db.Column(UUID(as_uuid=True), ForeignKey(User.id))
+    user_agent = db.Column(db.String, nullable=False)
+    auth_date = db.Column(db.DateTime, nullable=False)

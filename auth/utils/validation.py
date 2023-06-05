@@ -11,7 +11,7 @@ class CreateRegisterInputSchema(Schema):
 
 
 class CreateLoginInputSchema(Schema):
-
+    login = fields.Str(required=True, validate=validate.Length(min=4))
     password = fields.Str(required=True, validate=validate.Length(min=6))
 
 
