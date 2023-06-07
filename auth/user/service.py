@@ -1,16 +1,14 @@
-import json
-import jwt
 import datetime
 from auth.db.db import db
 from os import environ
 from auth.db.db_models import LoginHistory, User
-from flask import jsonify, request
+from flask import request
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import create_refresh_token
 from werkzeug.security import check_password_hash, generate_password_hash
-from utils.common import generate_response, TokenGenerator
+from utils.common import generate_response
 from utils.validation import (
-    CreateLoginInputSchema, CreateRegisterInputSchema, ResetPasswordInputSchema,
+    CreateLoginInputSchema, CreateRegisterInputSchema
 )
 from utils.http_code import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 
@@ -81,31 +79,6 @@ def login_user(request, input_data):
         return generate_response(
             message="Password is wrong", status=HTTP_400_BAD_REQUEST
         )
-
-
-def reset_password(request, input_data, token):
-    create_validation_schema = ResetPasswordInputSchema()
-    errors = create_validation_schema.validate(input_data)
-    if errors:
-        return generate_response(message=errors)
-    if not token:
-        return generate_response(
-            message="Token is required!",
-            status=HTTP_400_BAD_REQUEST,
-        )
-    token = TokenGenerator.decode_token(token)
-    user = User.query.filter_by(id=token.get('id')).first()
-    if user is None:
-        return generate_response(
-            message="No record found with this login, please signup first.",
-            status=HTTP_400_BAD_REQUEST,
-        )
-    user = User.query.filter_by(id=token['id']).first()
-    user.password = generate_password_hash(input_data.get('password')).decode("utf8")
-    db.session.commit()
-    return generate_response(
-        message="New password successfully set.", status=HTTP_200_OK
-    )
 
 
 def add_record_to_login_history(user: User, user_agent: str):
