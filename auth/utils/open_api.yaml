@@ -1,0 +1,339 @@
+openapi: 3.0.3
+info:
+  title: Online cinema AUTH
+  description: |-
+    API для сервиса авторизации в онлайн-кинотеатре с системой ролей.
+  version: 1.0.0
+paths:
+  /api/v1/user/register:
+    post:
+      tags:
+        - user
+      summary: Регистрация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserBody"
+      responses:
+        '200':
+          description: Успешная регистрация
+        '400':
+          description: Некорректный запрос
+  /api/v1/user/login:
+    post:
+      tags:
+        - user
+      summary: Вход пользователя в аккаунт
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserBody"
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessRefreshToken"
+        '401':
+          description: Неверные учетные данные
+        '400':
+          description: Некорректный запрос
+  /api/v1/user/refresh:
+    post:
+      tags:
+        - user
+      summary: Обновление access-токена с использованием refresh-токена
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessRefreshToken"
+      responses:
+        '200':
+          description: Успешное обновление токена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessRefreshToken"
+        '401':
+          description: Ошибка аутентификации
+        '400':
+          description: Некорректный запрос
+  /api/v1/user/logout:
+    post:
+      tags:
+        - user
+      summary: Выход пользователя из аккаунта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshToken"
+      responses:
+        '200':
+          description: Успешный выход
+        '401':
+          description: Неверные учетные данные
+        '400':
+          description: Некорректный запрос
+  /api/v1/user/change_credentials:
+    put:
+      summary: Изменение учетных данных пользователя
+      tags:
+        - user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                old_password:
+                  type: string
+                  description: Старый пароль пользователя
+                new_username:
+                  type: string
+                  description: Новое имя пользователя
+                new_password:
+                  type: string
+                  description: Новый пароль пользователя
+      responses:
+        '200':
+          description: Успешное изменение учетных данных
+        '400':
+          description: Некорректный запрос
+        '401':
+          description: Неверная аутентификация
+        '404':
+          description: Пользователь не найден
+        '409':
+          description: Неверный старый пароль
+  /api/v1/user/login_history:
+    get:
+      summary: Получение истории входов в аккаунт
+      tags:
+        - user
+      responses:
+        '200':
+          description: Успешное получение истории входов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date-time
+                    location:
+                      type: string
+                    device:
+                      type: string
+        '401':
+          description: Неверная аутентификация
+  /api/v1/access/roles:
+    get:
+      summary: Просмотр всех ролей
+      tags:
+        - access
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Успешное получение списка ролей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    description:
+                      type: string
+        '401':
+          description: Неверная аутентификация
+        '403':
+          description: Отсутствуют необходимые права доступа
+    post:
+      summary: Создание новой роли
+      tags:
+        - access
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Role"
+      responses:
+        '201':
+          description: Роль успешно создана
+        '400':
+          description: Некорректный запрос
+        '401':
+          description: Неверная аутентификация
+        '403':
+          description: Отсутствуют необходимые права доступа
+  /api/v1/access/roles/{role_id}:
+    put:
+      summary: Изменение роли по идентификатору
+      tags:
+        - access
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role_id
+          in: path
+          description: Идентификатор роли
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Role"
+      responses:
+        '200':
+          description: Роль успешно изменена
+        '400':
+          description: Некорректный запрос
+        '401':
+          description: Неверная аутентификация
+        '403':
+          description: Отсутствуют необходимые права доступа
+        '404':
+          description: Роль не найдена
+    delete:
+      summary: Удаление роли по идентификатору
+      tags:
+        - access
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role_id
+          in: path
+          description: Идентификатор роли
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Роль успешно удалена
+        '401':
+          description: Неверная аутентификация
+        '403':
+          description: Отсутствуют необходимые права доступа
+        '404':
+          description: Роль не найдена
+  /api/v1/users/{user_id}/roles:
+    post:
+      summary: Назначение роли пользователю по идентификатору
+      tags:
+        - access
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          description: Идентификатор пользователя
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role_id:
+                  type: integer
+      responses:
+        '200':
+          description: Роль успешно назначена пользователю
+        '400':
+          description: Некорректный запрос
+        '401':
+          description: Неверная аутентификация
+        '403':
+          description: Отсутствуют необходимые права доступа
+        '404':
+          description: Пользователь или роль не найдены
+  /api/v1/users/{user_id}/roles/{role_id}:
+    delete:
+      summary: Отзыв роли у пользователя по идентификаторам
+      tags:
+        - access
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          description: Идентификатор пользователя
+          required: true
+          schema:
+            type: integer
+        - name: role_id
+          in: path
+          description: Идентификатор роли
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Роль успешно отозвана
+        '401':
+          description: Неверная аутентификация
+        '403':
+          description: Отсутствуют необходимые права доступа
+        '404':
+          description: Пользователь или роль не найдены
+components:
+  schemas:
+    UserBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    AccessRefreshToken:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+    RefreshToken:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+    Role:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
