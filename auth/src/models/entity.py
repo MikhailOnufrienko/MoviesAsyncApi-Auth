@@ -1,4 +1,3 @@
-from typing import Any
 import uuid
 from datetime import datetime
 
@@ -25,7 +24,7 @@ class User(Base):
     last_name = Column(String(50))
     email = Column(String(50))
     profile = relationship('UserProfile', uselist=False, back_populates='user')
-#    created_at = Column(DateTime, default=datetime.utcnow)
+    login_history = relationship('LoginHistory', back_populates='user')
 
     def __init__(self, login: str, password: str) -> None:
         self.login = login
@@ -65,9 +64,26 @@ class UserProfile(Base):
     role_id = Column(UUID(as_uuid=True), ForeignKey('role.id'))
     role = relationship('Role', back_populates='users')
 
-    def __init__(self, user, role=None) -> None:
+    def __init__(self, user: User, role=None) -> None:
         self.user = user
         self.role = role
 
     def __repr__(self) -> str:
         return f'<{self.user}\'s profile'
+
+
+class LoginHistory(Base):
+    __tablename__ = 'login_history'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'))
+    user = relationship('User', back_populates='login_history')
+    user_agent = Column(String(255))
+    login_dt = Column(DateTime)
+
+    def __init__(self, user: User, login_dt: datetime) -> None:
+        self.login_dt = login_dt
+        self.user = user
+
+    def __repr__(self) -> str:
+        return f'<{self.user}\'s login history>'
