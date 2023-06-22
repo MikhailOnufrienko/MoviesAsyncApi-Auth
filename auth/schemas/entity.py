@@ -1,12 +1,13 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, constr
 
-class UserCreate(BaseModel):
+class UserRegistration(BaseModel):
     login: str
-    password: str
-    first_name: str
-    last_name: str
+    password: constr(min_length=8, max_length=50)
+    first_name: str | None
+    last_name: str | None
+    email: EmailStr | None
 
 class UserInDB(BaseModel):
     id: UUID

@@ -5,7 +5,7 @@ info:
     API для сервиса авторизации в онлайн-кинотеатре с системой ролей.
   version: 1.0.0
 paths:
-  /api/v1/user/register:
+  /api/v1/auth/user/register:
     post:
       tags:
         - user
@@ -21,7 +21,7 @@ paths:
           description: Успешная регистрация
         '400':
           description: Некорректный запрос
-  /api/v1/user/login:
+  /api/v1/auth/user/login:
     post:
       tags:
         - user
@@ -43,7 +43,7 @@ paths:
           description: Неверные учетные данные
         '400':
           description: Некорректный запрос
-  /api/v1/user/refresh:
+  /api/v1/auth/user/refresh:
     post:
       tags:
         - user
@@ -65,7 +65,7 @@ paths:
           description: Ошибка аутентификации
         '400':
           description: Некорректный запрос
-  /api/v1/user/logout:
+  /api/v1/auth/user/logout:
     post:
       tags:
         - user
@@ -83,7 +83,7 @@ paths:
           description: Неверные учетные данные
         '400':
           description: Некорректный запрос
-  /api/v1/user/change_credentials:
+  /api/v1/auth/user/change_credentials:
     put:
       summary: Изменение учетных данных пользователя
       tags:
@@ -115,7 +115,7 @@ paths:
           description: Пользователь не найден
         '409':
           description: Неверный старый пароль
-  /api/v1/user/login_history:
+  /api/v1/auth/user/login_history:
     get:
       summary: Получение истории входов в аккаунт
       tags:
@@ -308,7 +308,7 @@ components:
     UserBody:
       type: object
       properties:
-        username:
+        login:
           type: string
         password:
           type: string
