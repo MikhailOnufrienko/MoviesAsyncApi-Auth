@@ -24,3 +24,9 @@ login_history_route = '/user/login_history'
 async def register_user(user: UserRegistration, db: AsyncSession = Depends(get_postgres_session)) -> Response:
     response = await UserService.create_user(user, db)
     return response
+
+
+@router.post('/login', status_code=201)
+async def login_user(login: str, password: str, db: AsyncSession = Depends(get_postgres_session)) -> Response:
+    response = await UserService.login_user(login, password, db)
+    return response

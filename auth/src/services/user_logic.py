@@ -11,18 +11,23 @@ class UserService:
 
     @staticmethod
     async def create_user(user: UserRegistration, db: AsyncSession) -> Response:
-        if not await UserService.check_login_and_email_exist(user.login, user.email):
+        if not await UserService.check_login_exists(user.login) and not await UserService.check_email_exists(user.email):
             success_text = await UserService.save_user_to_database(user, db)
             return Response(content=success_text, status_code=201)
 
     @staticmethod
-    async def check_login_and_email_exist(login: str, email: str | None) -> bool:
+    async def check_login_exists(login: str) -> bool:
         async for session in get_postgres_session():
             query_for_login = select(User).filter(User.login == login)
             result = await session.execute(query_for_login)
             if result.scalar_one_or_none():
                 raise HTTPException(status_code=400, detail='Пользователь с таким логином уже зарегистрирован.')
-            if email:
+            return False
+        
+    @staticmethod
+    async def check_email_exists(email: str | None) -> bool:
+        if email:
+            async for session in get_postgres_session():
                 query_for_email = select(User).filter(User.email == email)
                 result = await session.execute(query_for_email)
                 if result.scalar_one_or_none():
@@ -43,3 +48,7 @@ class UserService:
         await db.commit()
         await db.refresh(new_user)
         return "Вы успешно зарегистрировались."
+    
+    @staticmethod
+    async def login_user(login: str, password: str, db: AsyncSession) -> Response:
+        pass
