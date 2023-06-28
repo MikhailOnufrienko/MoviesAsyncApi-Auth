@@ -1,18 +1,28 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
-
+from fastapi.exceptions import RequestValidationError
 from auth.src.core.config import app_settings
 from auth.src.db.redis import get_redis
 from auth.src.db.postgres import get_postgres_session
+from auth.src.api.v1 import user
 
 
 app = FastAPI(
     title=app_settings.SERVICE_NAME,
-    docs_url='/auth/api/openapi',
-    openapi_url='/auth/api/openapi.json',
-    default_response_class=ORJSONResponse
-)
+    docs_url='/api/openapi',
+    openapi_url='/api/openapi.json',
+    default_response_class=ORJSONResponse)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> ORJSONResponse:
+    return ORJSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"detail": exc.errors()},
+    )
 
 
 @app.on_event('startup')
@@ -29,9 +39,13 @@ async def shutdown() -> None:
     await postgres.close()
 
 
+app.include_router(user.router, prefix='/api/v1/auth/user', tags=['user'])
+
+
 if __name__ == '__main__':
     uvicorn.run(
         'main:app',
-        host='0.0.0.0',
-        port=8001
+        host='127.0.0.1',
+        port=8001, 
+        reload=True
     )

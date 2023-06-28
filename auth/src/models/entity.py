@@ -26,10 +26,16 @@ class User(Base):
     profile = relationship('UserProfile', uselist=False, back_populates='user')
     login_history = relationship('LoginHistory', back_populates='user')
 
-    def __init__(self, login: str, password: str) -> None:
+    def __init__(
+            self, login: str, hashed_password: str, first_name: str | None,
+            last_name: str | None, email = str | None
+        ) -> None:
         self.login = login
-        self.hashed_password = generate_password_hash(password)
-    
+        self.hashed_password = hashed_password
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.hashed_password, password)
 

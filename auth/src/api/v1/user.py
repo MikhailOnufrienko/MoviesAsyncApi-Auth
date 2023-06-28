@@ -1,8 +1,13 @@
 from fastapi import Response
-from auth.main import app
+from fastapi import APIRouter, Depends
 from auth.schemas.entity import UserRegistration
 from auth.src.services.user_logic import UserService
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from auth.src.db.postgres import get_postgres_session
+
+
+router = APIRouter()
 
 route_prefix: str = '/api/v1/auth'
 
@@ -15,7 +20,7 @@ login_history_route = '/user/login_history'
 
 
 
-@app.post('/user/register')
-async def register_user(user: UserRegistration) -> Response:
-    response = await UserService.create_user(user)
+@router.post('/register', status_code=201)
+async def register_user(user: UserRegistration, db: AsyncSession = Depends(get_postgres_session)) -> Response:
+    response = await UserService.create_user(user, db)
     return response
