@@ -5,7 +5,7 @@ from sqlalchemy import MetaData
 from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, relationship
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 
 
 metadata_obj = MetaData(schema="auth")
