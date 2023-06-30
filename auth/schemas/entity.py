@@ -1,3 +1,5 @@
+from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, constr
 
 class UserRegistration(BaseModel):
@@ -26,3 +28,8 @@ class RefreshToken(BaseModel):
 class TokenData(BaseModel):
     token_data: str
 
+
+class LoginHistoryToDB(BaseModel):
+    user_id: str
+    user_agent: str
+    login_dt: datetime

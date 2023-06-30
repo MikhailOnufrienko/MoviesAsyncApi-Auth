@@ -84,9 +84,11 @@ class LoginHistory(Base):
     user_agent = Column(String(255))
     login_dt = Column(DateTime)
 
-    def __init__(self, user: User, login_dt: datetime) -> None:
+    def __init__(self, user_id: UUID, user_agent: str, login_dt: datetime) -> None:
+        self.user_id = user_id
         self.login_dt = login_dt
-        self.user = user
+        self.user_agent = user_agent
+        
 
     def __repr__(self) -> str:
         return f'<{self.user}\'s login history>'

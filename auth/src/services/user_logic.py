@@ -1,11 +1,13 @@
+from datetime import datetime
 import json
-from fastapi import HTTPException, Response
+from uuid import UUID
+from fastapi import HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.security import generate_password_hash, check_password_hash
-from auth.schemas.entity import UserRegistration, UserLogin
+from auth.schemas.entity import UserRegistration, UserLogin, LoginHistoryToDB
 from auth.src.db.postgres import get_postgres_session
-from auth.src.models.entity import User
+from auth.src.models.entity import User, LoginHistory
 from auth.src.services.utils import generate_access_token, generate_refresh_token, save_refresh_token_to_cache
 from auth.src.core.config import app_settings
 
@@ -53,11 +55,12 @@ class UserService:
         return "Вы успешно зарегистрировались."
     
     @staticmethod
-    async def login_user(user: UserLogin) -> Response:
+    async def login_user(request: Request, user: UserLogin, db: AsyncSession) -> Response:
         if await UserService.check_credentials_correct(user.login, user.password):
             access_token, refresh_token = await UserService.generate_tokens(user)
             user_id = await UserService.get_user_id(user)
             await save_refresh_token_to_cache(user_id, refresh_token)
+            await UserService.save_login_data_to_db(request, user_id, db)
             content = json.dumps({
                 'user_id': user_id,
                 'access_token': access_token,
@@ -93,3 +96,14 @@ class UserService:
         async for session in get_postgres_session():
             result = await session.execute(query_for_id)
             return str(result.scalar_one())
+
+    @staticmethod
+    async def save_login_data_to_db(request: Request, user_id: UUID, db: AsyncSession):
+        login_data = LoginHistory(
+            user_id=user_id,
+            user_agent=request.headers.get('User-Agent'),
+            login_dt=datetime.now()
+        )
+        db.add(login_data)
+        await db.commit()
+        await db.refresh(login_data)

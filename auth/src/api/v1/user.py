@@ -1,4 +1,4 @@
-from fastapi import Response
+from fastapi import Request, Response
 from fastapi import APIRouter, Depends
 from auth.schemas.entity import UserRegistration
 from auth.src.services.user_logic import UserService
@@ -27,6 +27,6 @@ async def register_user(user: UserRegistration, db: AsyncSession = Depends(get_p
 
 
 @router.post('/login', status_code=200)
-async def login_user(user: UserRegistration) -> Response:
-    response = await UserService.login_user(user)
+async def login_user(request: Request, user: UserRegistration, db: AsyncSession = Depends(get_postgres_session)) -> Response:
+    response = await UserService.login_user(request, user, db)
     return response
