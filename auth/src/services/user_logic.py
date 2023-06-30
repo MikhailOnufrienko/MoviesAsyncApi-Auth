@@ -68,7 +68,8 @@ class UserService:
             })
             response = Response(status_code=200, content=content)
             response.headers['Content-Type'] = 'application/json'
-        return response
+            return response
+        raise HTTPException(status_code=401, detail='Логин или пароль не верен.')
     
     @staticmethod
     async def check_credentials_correct(login: str, password: str) -> bool:

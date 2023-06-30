@@ -17,7 +17,7 @@ paths:
             schema:
               $ref: "#/components/schemas/UserBody"
       responses:
-        '200':
+        '201':
           description: Успешная регистрация
         '400':
           description: Некорректный запрос

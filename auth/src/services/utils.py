@@ -28,5 +28,18 @@ async def generate_refresh_token(data: dict, expires_delta: int) -> str:
 
 async def save_refresh_token_to_cache(user_id: str, token: str) -> None:
     cache: client.Redis = await get_redis()
+    if await check_refresh_token_exists_in_cache(cache, user_id):
+        await delete_refresh_token_from_cache(cache, user_id)
     expires: int = app_settings.REFRESH_TOKEN_EXPIRES_IN * 60 * 60 * 24
     await cache.setex(user_id, expires, token)
+
+
+async def check_refresh_token_exists_in_cache(cache: client.Redis, user_id: str) -> bool:
+    old_token = await cache.get(user_id)
+    if old_token:
+        return True
+    return False
+
+
+async def delete_refresh_token_from_cache(cache: client.Redis, user_id: str) -> None:
+    cache.delete(user_id)
