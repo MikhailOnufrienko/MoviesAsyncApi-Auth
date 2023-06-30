@@ -35,9 +35,6 @@ class User(Base):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
-        
-    def check_password(self, password: str) -> bool:
-        return check_password_hash(self.hashed_password, password)
 
     def __repr__(self) -> str:
         return f'<User {self.login}>'

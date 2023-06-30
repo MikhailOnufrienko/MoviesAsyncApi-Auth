@@ -26,7 +26,7 @@ async def register_user(user: UserRegistration, db: AsyncSession = Depends(get_p
     return response
 
 
-@router.post('/login', status_code=201)
-async def login_user(login: str, password: str, db: AsyncSession = Depends(get_postgres_session)) -> Response:
-    response = await UserService.login_user(login, password, db)
+@router.post('/login', status_code=200)
+async def login_user(user: UserRegistration) -> Response:
+    response = await UserService.login_user(user)
     return response

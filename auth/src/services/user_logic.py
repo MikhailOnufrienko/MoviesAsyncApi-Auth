@@ -1,10 +1,13 @@
+import json
 from fastapi import HTTPException, Response
-from sqlalchemy.future import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from werkzeug.security import generate_password_hash
-from auth.schemas.entity import UserRegistration
+from werkzeug.security import generate_password_hash, check_password_hash
+from auth.schemas.entity import UserRegistration, UserLogin
 from auth.src.db.postgres import get_postgres_session
 from auth.src.models.entity import User
+from auth.src.services.utils import generate_access_token, generate_refresh_token, save_refresh_token_to_cache
+from auth.src.core.config import app_settings
 
 
 class UserService:
@@ -50,5 +53,43 @@ class UserService:
         return "Вы успешно зарегистрировались."
     
     @staticmethod
-    async def login_user(login: str, password: str, db: AsyncSession) -> Response:
-        pass
+    async def login_user(user: UserLogin) -> Response:
+        if await UserService.check_credentials_correct(user.login, user.password):
+            access_token, refresh_token = await UserService.generate_tokens(user)
+            user_id = await UserService.get_user_id(user)
+            await save_refresh_token_to_cache(user_id, refresh_token)
+            content = json.dumps({
+                'user_id': user_id,
+                'access_token': access_token,
+                'refresh_token': refresh_token
+            })
+            response = Response(status_code=200, content=content)
+            response.headers['Content-Type'] = 'application/json'
+        return response
+    
+    @staticmethod
+    async def check_credentials_correct(login: str, password: str) -> bool:
+        query_for_user = select(User).filter(User.login == login)
+        async for session in get_postgres_session():
+            result = await session.execute(query_for_user)
+            if result.scalar_one_or_none():
+                query_for_password = select(User.hashed_password).filter(User.login == login)
+                result = await session.execute(query_for_password)
+                hashed_password = result.scalar_one()
+                if check_password_hash(hashed_password, password):
+                    return True
+            return False
+        
+    @staticmethod
+    async def generate_tokens(user: UserLogin) -> tuple[str]:
+        username = {'sub': user.login}
+        access_token = await generate_access_token(username, app_settings.ACCESS_TOKEN_EXPIRES_IN)
+        refresh_token = await generate_refresh_token(username, app_settings.REFRESH_TOKEN_EXPIRES_IN)
+        return access_token, refresh_token
+    
+    @staticmethod
+    async def get_user_id(user: UserLogin) -> str:
+        query_for_id = select(User.id).filter(User.login == user.login)
+        async for session in get_postgres_session():
+            result = await session.execute(query_for_id)
+            return str(result.scalar_one())

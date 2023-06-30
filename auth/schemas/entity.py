@@ -7,3 +7,22 @@ class UserRegistration(BaseModel):
     last_name: str | None
     email: EmailStr | None
     
+
+class UserLogin(BaseModel):
+    login: str
+    password: str
+
+
+class AccessToken(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class RefreshToken(BaseModel):
+    user_id: str
+    refresh_token: str
+
+
+class TokenData(BaseModel):
+    token_data: str
+
