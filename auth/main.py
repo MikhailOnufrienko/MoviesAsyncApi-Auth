@@ -4,7 +4,7 @@ from fastapi.responses import ORJSONResponse
 from fastapi.exceptions import HTTPException, RequestValidationError
 from auth.src.core.config import app_settings
 from auth.src.db.redis import get_redis
-from auth.src.db.postgres import get_postgres_session, get_sync_session
+from auth.src.db.postgres import get_postgres_session
 from auth.src.api.v1 import user
 
 

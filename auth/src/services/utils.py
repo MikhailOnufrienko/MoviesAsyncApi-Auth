@@ -1,20 +1,14 @@
 from datetime import datetime, timedelta
 
-from jose import JWTError, jwt
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from auth.schemas.entity import RefreshToken
+from jose import jwt
 from redis.asyncio import client
 from sqlalchemy import select
-from sqlalchemy import event
 from sqlalchemy import insert
 
 from auth.src.core.config import app_settings
 from auth.src.db.redis import get_redis
 from auth.src.models.entity import User, Role, UserProfile
 from auth.src.db.postgres import AsyncSession, get_postgres_session
-from auth.src.db.postgres import get_sync_session
-from sqlalchemy.orm import Session
-from sqlalchemy.engine import Connection
 
 
 default_role_name: str = 'registered user'
