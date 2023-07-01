@@ -67,9 +67,9 @@ class UserProfile(Base):
     role_id = Column(UUID(as_uuid=True), ForeignKey('role.id'))
     role = relationship('Role', back_populates='users')
 
-    def __init__(self, user: User, role=None) -> None:
-        self.user = user
-        self.role = role
+    def __init__(self, user_id: UUID, role_id: UUID) -> None:
+        self.user_id = user_id
+        self.role_id = role_id
 
     def __repr__(self) -> str:
         return f'<{self.user}\'s profile'

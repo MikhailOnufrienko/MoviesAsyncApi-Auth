@@ -4,10 +4,20 @@ from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from auth.schemas.entity import RefreshToken
 from redis.asyncio import client
+from sqlalchemy import select
+from sqlalchemy import event
+from sqlalchemy import insert
 
 from auth.src.core.config import app_settings
 from auth.src.db.redis import get_redis
+from auth.src.models.entity import User, Role, UserProfile
+from auth.src.db.postgres import AsyncSession, get_postgres_session
+from auth.src.db.postgres import get_sync_session
+from sqlalchemy.orm import Session
+from sqlalchemy.engine import Connection
 
+
+default_role_name: str = 'registered user'
 
 
 async def generate_access_token(data: dict, expires_delta: int) -> str:
@@ -43,3 +53,15 @@ async def check_refresh_token_exists_in_cache(cache: client.Redis, user_id: str)
 
 async def delete_refresh_token_from_cache(cache: client.Redis, user_id: str) -> None:
     cache.delete(user_id)
+    
+
+async def fill_in_user_profile_table(db: AsyncSession, user: User) -> None:
+    query_for_default_role = select(Role.id).filter(Role.name == default_role_name)
+    async for session in get_postgres_session():
+        result = await session.execute(query_for_default_role)
+        default_role_id = result.scalar_one()
+        if default_role_id:
+            user_profile_table = UserProfile.__table__
+            insert_query = insert(user_profile_table).values(user_id=user.id, role_id=default_role_id)
+            await session.execute(insert_query)
+        await session.commit()

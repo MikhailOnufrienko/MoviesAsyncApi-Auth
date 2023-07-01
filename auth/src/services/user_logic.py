@@ -5,11 +5,12 @@ from fastapi import HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.security import generate_password_hash, check_password_hash
-from auth.schemas.entity import UserRegistration, UserLogin, LoginHistoryToDB
+from auth.schemas.entity import UserRegistration, UserLogin
 from auth.src.db.postgres import get_postgres_session
-from auth.src.models.entity import User, LoginHistory
+from auth.src.models.entity import User, UserProfile, LoginHistory
 from auth.src.services.utils import generate_access_token, generate_refresh_token, save_refresh_token_to_cache
 from auth.src.core.config import app_settings
+from auth.src.services.utils import fill_in_user_profile_table
 
 
 class UserService:
@@ -51,9 +52,9 @@ class UserService:
         )
         db.add(new_user)
         await db.commit()
-        await db.refresh(new_user)
+        await fill_in_user_profile_table(db, new_user)
         return "Вы успешно зарегистрировались."
-    
+
     @staticmethod
     async def login_user(request: Request, user: UserLogin, db: AsyncSession) -> Response:
         if await UserService.check_credentials_correct(user.login, user.password):
