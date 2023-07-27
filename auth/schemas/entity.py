@@ -7,7 +7,7 @@ class UserRegistration(BaseModel):
     password: constr(min_length=8, max_length=50)
     first_name: str | None
     last_name: str | None
-    email: EmailStr | None
+    email: EmailStr
     
 
 class UserLogin(BaseModel):

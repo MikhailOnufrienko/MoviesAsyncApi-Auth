@@ -51,11 +51,10 @@ async def delete_refresh_token_from_cache(cache: client.Redis, user_id: str) -> 
 
 async def fill_in_user_profile_table(db: AsyncSession, user: User) -> None:
     query_for_default_role = select(Role.id).filter(Role.name == default_role_name)
-    async for session in get_postgres_session():
-        result = await session.execute(query_for_default_role)
-        default_role_id = result.scalar_one()
-        if default_role_id:
-            user_profile_table = UserProfile.__table__
-            insert_query = insert(user_profile_table).values(user_id=user.id, role_id=default_role_id)
-            await session.execute(insert_query)
-        await session.commit()
+    result = await db.execute(query_for_default_role)
+    default_role_id = result.scalar_one()
+    if default_role_id:
+        user_profile_table = UserProfile.__table__
+        insert_query = insert(user_profile_table).values(user_id=user.id, role_id=default_role_id)
+        await db.execute(insert_query)
+    await db.commit()
