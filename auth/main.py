@@ -33,18 +33,18 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> ORJSON
     )
 
 
-@app.on_event('startup')
-async def startup() -> None:
-    global redis, postgres
-    redis = await get_redis()
-    async for session in get_postgres_session():
-        postgres = session
+# @app.on_event('startup')
+# async def startup() -> None:
+#     global redis, postgres
+#     redis = await get_redis()
+#     async for session in get_postgres_session():
+#         postgres = session
 
 
-@app.on_event('shutdown')
-async def shutdown() -> None:
-    await redis.close()
-    await postgres.close()
+# @app.on_event('shutdown')
+# async def shutdown() -> None:
+#     await redis.close()
+#     await postgres.close()
 
 
 app.include_router(user.router, prefix='/api/v1/auth/user', tags=['user'])
