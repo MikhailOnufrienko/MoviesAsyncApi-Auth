@@ -1,16 +1,13 @@
 from datetime import datetime
-import json
 from uuid import UUID
-from fastapi import HTTPException, Request, Response
+from fastapi import HTTPException, Request
+from redis.asyncio import client
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.security import generate_password_hash, check_password_hash
 from auth.schemas.entity import UserRegistration, UserLogin
-from auth.src.db.postgres import get_postgres_session
 from auth.src.models.entity import User, LoginHistory
-from auth.src.services.utils import generate_access_token, generate_refresh_token, save_refresh_token_to_cache
-from auth.src.core.config import app_settings
-from auth.src.services.utils import fill_in_user_profile_table
+from auth.src.services import token_logic
 
 
 async def create_user(user: UserRegistration, db: AsyncSession) -> str:
@@ -53,55 +50,49 @@ async def save_user_to_database(user: UserRegistration, db: AsyncSession) -> str
     )
     db.add(new_user)
     await db.commit()
-    await fill_in_user_profile_table(db, new_user)
+    await token_logic.fill_in_user_profile_table(db, new_user)
     return "Вы успешно зарегистрировались."
 
 
-async def login_user(request: Request, user: UserLogin, db: AsyncSession) -> Response:
-    if await check_credentials_correct(user.login, user.password):
-        access_token, refresh_token = await generate_tokens(user)
-        user_id = await get_user_id(user)
-        await save_refresh_token_to_cache(user_id, refresh_token)
+async def login_user(request: Request, user: UserLogin, db: AsyncSession, cache: client.Redis) -> tuple:
+    if await check_credentials_correct(user.login, user.password, db):
+        user_id = await get_user_id_by_login(user, db)
+        user_id_as_string = str(user_id)
+        access_token, refresh_token = await token_logic.generate_tokens(user_id_as_string)
+        await token_logic.save_refresh_token_to_cache(user_id_as_string, refresh_token, cache)
         await save_login_data_to_db(request, user_id, db)
-        content = json.dumps({
-            'user_id': user_id,
-            'access_token': access_token,
-            'refresh_token': refresh_token
-        })
-        response = Response(status_code=200, content=content)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        success = "Вы вошли в свою учётную запись."
+        headers = {
+            'X-Access-Token': access_token,
+            'X-Refresh-Token': refresh_token
+        }
+        return success, headers
+
+
+async def check_credentials_correct(login: str, password: str, db: AsyncSession) -> bool:
+    query_for_login = select(User.login).filter(User.login == login)
+    result = await db.execute(query_for_login)
+    if result.scalar_one_or_none():
+        query_for_password = select(
+            User.hashed_password
+        ).filter(User.login == login)
+        result = await db.execute(query_for_password)
+        hashed_password = result.scalar_one()
+        if check_password_hash(hashed_password, password):
+            return True
     raise HTTPException(status_code=401, detail='Логин или пароль не верен.')
 
 
-async def check_credentials_correct(login: str, password: str) -> bool:
-    query_for_user = select(User).filter(User.login == login)
-    async for session in get_postgres_session():
-        result = await session.execute(query_for_user)
-        if result.scalar_one_or_none():
-            query_for_password = select(User.hashed_password).filter(User.login == login)
-            result = await session.execute(query_for_password)
-            hashed_password = result.scalar_one()
-            if check_password_hash(hashed_password, password):
-                return True
-        return False
-    
-
-async def generate_tokens(user: UserLogin) -> tuple[str]:
-    username = {'sub': user.login}
-    access_token = await generate_access_token(username, app_settings.ACCESS_TOKEN_EXPIRES_IN)
-    refresh_token = await generate_refresh_token(username, app_settings.REFRESH_TOKEN_EXPIRES_IN)
-    return access_token, refresh_token
+async def get_user_id_by_login(user: UserLogin, db: AsyncSession) -> UUID:
+    query = select(User.id).filter(User.login == user.login)
+    result = await db.execute(query)
+    user_id = result.scalar_one()
+    return user_id
 
 
-async def get_user_id(user: UserLogin) -> str:
-    query_for_id = select(User.id).filter(User.login == user.login)
-    async for session in get_postgres_session():
-        result = await session.execute(query_for_id)
-        return str(result.scalar_one())
-
-
-async def save_login_data_to_db(request: Request, user_id: UUID, db: AsyncSession):
+async def save_login_data_to_db(
+        request: Request, user_id: UUID, db: AsyncSession
+) -> None:
     login_data = LoginHistory(
         user_id=user_id,
         user_agent=request.headers.get('User-Agent'),

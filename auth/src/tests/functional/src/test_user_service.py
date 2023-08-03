@@ -48,14 +48,30 @@ def test_email_exists():
     }
 
 
-# def test_login_user():
-#     response = client.post(
-#         '/api/v1/auth/user/login',
-#         json = {
-#             'login': 'descartes',
-#             'password': 'cogitoergosum'
-#         }
-#     )
-#     data = response.json()
-#     assert response.status_code == 200, response.text
-#     assert data == 'Вы вошли в свою учётную запись.'
+def test_password_is_incorrect():
+    response = client.post(
+        '/api/v1/auth/user/login',
+        json = {
+            'login': 'descartes',
+            'password': 'wrongpassword'
+        }
+    )
+    assert response.status_code == 401, response.text
+    assert response.json() == {'detail': 'Логин или пароль не верен.'}
+
+
+def test_login_user():
+    response = client.post(
+        '/api/v1/auth/user/login',
+        json = {
+            'login': 'descartes',
+            'password': 'cogitoergosum'
+        }
+    )
+    data = response.json()
+    assert response.status_code == 200, response.text
+    assert data == 'Вы вошли в свою учётную запись.'
+    assert 'X-Access-Token' in response.headers
+    assert 'X-Refresh-Token' in response.headers
+    access_token = response.headers['X-Access-Token']
+    refresh_token = response.headers['X-Refresh-Token']
