@@ -15,22 +15,22 @@ app = FastAPI(
     default_response_class=ORJSONResponse)
 
 
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> ORJSONResponse:
-    return ORJSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"error": exc.errors()},
-    )
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(
+#     request: Request, exc: RequestValidationError
+# ) -> ORJSONResponse:
+#     return ORJSONResponse(
+#         status_code=status.HTTP_400_BAD_REQUEST,
+#         content={"error": exc.errors()},
+#     )
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) -> ORJSONResponse:
-    return ORJSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.detail}
-    )
+# @app.exception_handler(HTTPException)
+# async def http_exception_handler(request: Request, exc: HTTPException) -> ORJSONResponse:
+#     return ORJSONResponse(
+#         status_code=exc.status_code,
+#         content={"error": exc.detail}
+#     )
 
 
 # @app.on_event('startup')

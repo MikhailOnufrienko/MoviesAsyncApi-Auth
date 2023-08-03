@@ -13,6 +13,7 @@ from auth.src.models.entity import metadata_obj
 from auth.src.db.postgres import get_postgres_session
 from auth.main import app
 from auth.src.tests.functional.config import settings
+from auth.src.models.entity import User
 
 
 DATABASE_DSN: str = 'postgresql+asyncpg://{user}:{password}@{host}:{port}/{name}'.format(
@@ -28,6 +29,8 @@ async_engine: AsyncEngine = create_async_engine(DATABASE_DSN, poolclass=NullPool
 async_session: AsyncSession = async_sessionmaker(async_engine, expire_on_commit=False)
 
 metadata_obj.bind = async_engine
+
+client = TestClient(app)
 
 
 async def override_get_postgres_session() -> AsyncSession:
@@ -61,9 +64,6 @@ def event_loop(request):
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
-
-
-client = TestClient(app)
 
 
 @pytest.fixture(scope='session')
