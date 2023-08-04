@@ -2,12 +2,16 @@ from datetime import datetime
 from uuid import UUID
 from fastapi import HTTPException, Request
 from redis.asyncio import client
-from sqlalchemy import select
+from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.security import generate_password_hash, check_password_hash
-from auth.schemas.entity import UserRegistration, UserLogin
+from auth.schemas.entity import Token, UserRegistration, UserLogin
 from auth.src.models.entity import User, LoginHistory
 from auth.src.services import token_logic
+from auth.src.models.entity import User, Role, UserProfile
+
+
+default_role_name: str = 'registered user'
 
 
 async def create_user(user: UserRegistration, db: AsyncSession) -> str:
@@ -50,11 +54,16 @@ async def save_user_to_database(user: UserRegistration, db: AsyncSession) -> str
     )
     db.add(new_user)
     await db.commit()
-    await token_logic.fill_in_user_profile_table(db, new_user)
+    await fill_in_user_profile_table(db, new_user)
     return "Вы успешно зарегистрировались."
 
 
-async def login_user(request: Request, user: UserLogin, db: AsyncSession, cache: client.Redis) -> tuple:
+async def login_user(
+    request: Request,
+    user: UserLogin,
+    db: AsyncSession,
+    cache: client.Redis
+) -> tuple:
     if await check_credentials_correct(user.login, user.password, db):
         user_id = await get_user_id_by_login(user, db)
         user_id_as_string = str(user_id)
@@ -101,3 +110,23 @@ async def save_login_data_to_db(
     db.add(login_data)
     await db.commit()
     await db.refresh(login_data)
+
+
+async def fill_in_user_profile_table(db: AsyncSession, user: User) -> None:
+    query_for_default_role = select(Role.id).filter(Role.name == default_role_name)
+    result = await db.execute(query_for_default_role)
+    default_role_id = result.scalar_one_or_none()
+    if default_role_id:
+        user_profile_table = UserProfile.__table__
+        insert_query = (
+            insert(user_profile_table).values(user_id=user.id, role_id=default_role_id)
+        )
+        await db.execute(insert_query)
+    await db.commit()
+
+
+async def logout_user(tokens: Token, cache: client.Redis) -> str:
+    await token_logic.add_invalid_access_token_to_cache(tokens.access_token, cache)
+    user_id = await token_logic.get_user_id_by_token(tokens.access_token)
+    await token_logic.delete_refresh_token_from_cache(cache, user_id)
+    return 'Вы вышли из учётной записи.'

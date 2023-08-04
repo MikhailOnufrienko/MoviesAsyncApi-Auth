@@ -2,17 +2,9 @@ from datetime import datetime, timedelta
 
 from jose import jwt
 from redis.asyncio import client
-from sqlalchemy import select
-from sqlalchemy import insert
 
 from auth.src.core.config import app_settings
-from auth.src.db.redis import get_redis
-from auth.src.models.entity import User, Role, UserProfile
-from auth.src.db.postgres import AsyncSession
 from auth.src.core.config import app_settings
-
-
-default_role_name: str = 'registered user'
 
 
 async def generate_tokens(user_id: str) -> tuple[str]:
@@ -68,16 +60,17 @@ async def delete_refresh_token_from_cache(
     cache: client.Redis, user_id: str
 ) -> None:
     await cache.delete(user_id)
-    
 
-async def fill_in_user_profile_table(db: AsyncSession, user: User) -> None:
-    query_for_default_role = select(Role.id).filter(Role.name == default_role_name)
-    result = await db.execute(query_for_default_role)
-    default_role_id = result.scalar_one_or_none()
-    if default_role_id:
-        user_profile_table = UserProfile.__table__
-        insert_query = (
-            insert(user_profile_table).values(user_id=user.id, role_id=default_role_id)
-        )
-        await db.execute(insert_query)
-    await db.commit()
+
+async def add_invalid_access_token_to_cache(
+    access_token: str, cache: client.Redis
+) -> None:
+    current_datetime = datetime.now()
+    invalid_token_key = f'invalid:{current_datetime}'
+    expires: int = app_settings.ACCESS_TOKEN_EXPIRES_IN * 24 * 60 * 60
+    await cache.setex(invalid_token_key, expires, access_token)
+
+
+async def get_user_id_by_token(access_token: str) -> str:
+    claims = jwt.get_unverified_claims(access_token)
+    return claims['sub']

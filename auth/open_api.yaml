@@ -9,7 +9,7 @@ paths:
     post:
       tags:
         - user
-      summary: Регистрация пользователя
+      summary: Регистрация нового пользователя
       requestBody:
         required: true
         content:

@@ -1,15 +1,15 @@
 from typing import Annotated
 
-from fastapi import Request, Response
-from fastapi import APIRouter, Depends
+from fastapi import Request, APIRouter
+from fastapi import Depends
 from fastapi.responses import JSONResponse
-from auth.schemas.entity import UserLogin, UserRegistration
-from auth.src.services import user_logic
-from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import client
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from auth.schemas.entity import Token, UserLogin, UserRegistration
 from auth.src.db.postgres import get_postgres_session
 from auth.src.db.redis import get_redis
+from auth.src.services import user_logic
 
 
 router = APIRouter()
@@ -39,3 +39,15 @@ async def login_user(
     """
     success, headers = await user_logic.login_user(request, user, db, cache)
     return JSONResponse(content=success, headers=headers)
+
+
+@router.post('/logout', status_code=200, summary='Выход из учётной записи.')
+async def logout_user(
+    tokens: Token,
+    cache: REDIS_DEPEND
+) -> JSONResponse:
+    """
+    Возвращает строку с уведомлением о выходе из учётной записи.
+    """
+    success = await user_logic.logout_user(tokens, cache)
+    return JSONResponse(content=success)
