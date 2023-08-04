@@ -1,45 +1,103 @@
-from fastapi import HTTPException, Response
-from sqlalchemy.future import select
+from datetime import datetime
+from uuid import UUID
+from fastapi import HTTPException, Request
+from redis.asyncio import client
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from werkzeug.security import generate_password_hash
-from auth.schemas.entity import UserRegistration
-from auth.src.db.postgres import get_postgres_session
-from auth.src.models.entity import User
+from werkzeug.security import generate_password_hash, check_password_hash
+from auth.schemas.entity import UserRegistration, UserLogin
+from auth.src.models.entity import User, LoginHistory
+from auth.src.services import token_logic
 
 
-class UserService:
+async def create_user(user: UserRegistration, db: AsyncSession) -> str:
+    if (await check_login_not_exists(user.login, db)
+        and await check_email_not_exists(user.email, db)):
+        success = await save_user_to_database(user, db)
+        return success
 
-    @staticmethod
-    async def create_user(user: UserRegistration, db: AsyncSession) -> Response:
-        if not await UserService.check_login_and_email_exist(user.login, user.email):
-            success_text = await UserService.save_user_to_database(user, db)
-            return Response(content=success_text, status_code=201)
 
-    @staticmethod
-    async def check_login_and_email_exist(login: str, email: str | None) -> bool:
-        async for session in get_postgres_session():
-            query_for_login = select(User).filter(User.login == login)
-            result = await session.execute(query_for_login)
-            if result.scalar_one_or_none():
-                raise HTTPException(status_code=400, detail='Пользователь с таким логином уже зарегистрирован.')
-            if email:
-                query_for_email = select(User).filter(User.email == email)
-                result = await session.execute(query_for_email)
-                if result.scalar_one_or_none():
-                    raise HTTPException(status_code=400, detail='Пользователь с таким email уже зарегистрирован.')
-            return False
-
-    @staticmethod
-    async def save_user_to_database(user: UserRegistration, db: AsyncSession) -> str:
-        hashed_password = generate_password_hash(user.password)
-        new_user = User(
-            login=user.login,
-            hashed_password=hashed_password,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            email=user.email
+async def check_login_not_exists(login: str, db: AsyncSession) -> bool:
+    query = select(User.login).filter(User.login == login)
+    result = await db.execute(query)
+    if result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail='Пользователь с таким логином уже зарегистрирован.'
         )
-        db.add(new_user)
-        await db.commit()
-        await db.refresh(new_user)
-        return "Вы успешно зарегистрировались."
+    return True
+    
+
+async def check_email_not_exists(email: str, db: AsyncSession) -> bool:
+    query = select(User.email).filter(User.email == email)
+    result = await db.execute(query)
+    if result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail='Пользователь с таким email уже зарегистрирован.'
+        )
+    return True
+
+
+async def save_user_to_database(user: UserRegistration, db: AsyncSession) -> str:
+    hashed_password = generate_password_hash(user.password)
+    new_user = User(
+        login=user.login,
+        hashed_password=hashed_password,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        email=user.email
+    )
+    db.add(new_user)
+    await db.commit()
+    await token_logic.fill_in_user_profile_table(db, new_user)
+    return "Вы успешно зарегистрировались."
+
+
+async def login_user(request: Request, user: UserLogin, db: AsyncSession, cache: client.Redis) -> tuple:
+    if await check_credentials_correct(user.login, user.password, db):
+        user_id = await get_user_id_by_login(user, db)
+        user_id_as_string = str(user_id)
+        access_token, refresh_token = await token_logic.generate_tokens(user_id_as_string)
+        await token_logic.save_refresh_token_to_cache(user_id_as_string, refresh_token, cache)
+        await save_login_data_to_db(request, user_id, db)
+        success = "Вы вошли в свою учётную запись."
+        headers = {
+            'X-Access-Token': access_token,
+            'X-Refresh-Token': refresh_token
+        }
+        return success, headers
+
+
+async def check_credentials_correct(login: str, password: str, db: AsyncSession) -> bool:
+    query_for_login = select(User.login).filter(User.login == login)
+    result = await db.execute(query_for_login)
+    if result.scalar_one_or_none():
+        query_for_password = select(
+            User.hashed_password
+        ).filter(User.login == login)
+        result = await db.execute(query_for_password)
+        hashed_password = result.scalar_one()
+        if check_password_hash(hashed_password, password):
+            return True
+    raise HTTPException(status_code=401, detail='Логин или пароль не верен.')
+
+
+async def get_user_id_by_login(user: UserLogin, db: AsyncSession) -> UUID:
+    query = select(User.id).filter(User.login == user.login)
+    result = await db.execute(query)
+    user_id = result.scalar_one()
+    return user_id
+
+
+async def save_login_data_to_db(
+        request: Request, user_id: UUID, db: AsyncSession
+) -> None:
+    login_data = LoginHistory(
+        user_id=user_id,
+        user_agent=request.headers.get('User-Agent'),
+        login_dt=datetime.now()
+    )
+    db.add(login_data)
+    await db.commit()
+    await db.refresh(login_data)

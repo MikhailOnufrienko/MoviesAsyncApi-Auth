@@ -5,7 +5,6 @@ from sqlalchemy import MetaData
 from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, relationship
-from werkzeug.security import check_password_hash
 
 
 metadata_obj = MetaData(schema="auth")
@@ -35,9 +34,6 @@ class User(Base):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
-        
-    def check_password(self, password: str) -> bool:
-        return check_password_hash(self.hashed_password, password)
 
     def __repr__(self) -> str:
         return f'<User {self.login}>'
@@ -70,9 +66,9 @@ class UserProfile(Base):
     role_id = Column(UUID(as_uuid=True), ForeignKey('role.id'))
     role = relationship('Role', back_populates='users')
 
-    def __init__(self, user: User, role=None) -> None:
-        self.user = user
-        self.role = role
+    def __init__(self, user_id: UUID, role_id: UUID) -> None:
+        self.user_id = user_id
+        self.role_id = role_id
 
     def __repr__(self) -> str:
         return f'<{self.user}\'s profile'
@@ -87,9 +83,11 @@ class LoginHistory(Base):
     user_agent = Column(String(255))
     login_dt = Column(DateTime)
 
-    def __init__(self, user: User, login_dt: datetime) -> None:
+    def __init__(self, user_id: UUID, user_agent: str, login_dt: datetime) -> None:
+        self.user_id = user_id
         self.login_dt = login_dt
-        self.user = user
+        self.user_agent = user_agent
+        
 
     def __repr__(self) -> str:
         return f'<{self.user}\'s login history>'

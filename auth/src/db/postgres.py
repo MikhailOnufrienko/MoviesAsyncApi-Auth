@@ -11,9 +11,10 @@ DATABASE_DSN: str = 'postgresql+asyncpg://{user}:{password}@{host}:{port}/{name}
     name=app_settings.DB_NAME
 )
 
-engine: AsyncEngine = create_async_engine(DATABASE_DSN, echo=True, future=True)
+async_engine: AsyncEngine = create_async_engine(DATABASE_DSN, echo=True, future=True)
 
-async_session: AsyncSession = async_sessionmaker(engine, expire_on_commit=False)
+async_session: AsyncSession = async_sessionmaker(async_engine, expire_on_commit=False)
+
 
 async def get_postgres_session() -> AsyncSession:
     async with async_session() as session:
