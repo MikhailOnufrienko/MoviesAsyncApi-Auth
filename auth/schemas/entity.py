@@ -15,18 +15,9 @@ class UserLogin(BaseModel):
     password: str
 
 
-class AccessToken(BaseModel):
+class Token(BaseModel):
     access_token: str
-    token_type: str
-
-
-class RefreshToken(BaseModel):
-    user_id: str
     refresh_token: str
-
-
-class TokenData(BaseModel):
-    token_data: str
 
 
 class LoginHistoryToDB(BaseModel):
