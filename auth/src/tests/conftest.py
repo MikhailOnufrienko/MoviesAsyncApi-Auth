@@ -1,5 +1,7 @@
+import logging
+import time
 from typing import AsyncGenerator
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 import asyncio
 import pytest
@@ -7,13 +9,17 @@ from httpx import AsyncClient
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.pool import NullPool
+from werkzeug.security import generate_password_hash
 
-from auth.src.models.entity import metadata_obj
+from auth.src.models.entity import User, metadata_obj
 from auth.src.db.postgres import get_postgres_session
 from auth.main import app
 from auth.src.tests.functional.config import settings
-from auth.src.models.entity import User
+
+
+logger = logging.getLogger(name='__name__')
 
 
 DATABASE_DSN: str = 'postgresql+asyncpg://{user}:{password}@{host}:{port}/{name}'.format(
@@ -49,13 +55,25 @@ async def create_schema():
         await session.commit()
 
 
-@pytest.fixture(autouse=True, scope='session')
-async def prepare_db():
+@pytest.fixture(scope='session')
+async def prepare_db(create_schema):
     async with async_engine.begin() as conn:
         await conn.run_sync(metadata_obj.create_all)
     yield
     async with async_engine.begin() as conn:
         await conn.run_sync(metadata_obj.drop_all)
+
+
+@pytest.fixture(scope='session')
+async def create_user(prepare_db):
+    async with async_session() as session:
+        existing_wizard = select(User.login).filter(User.login == "wizard")
+        result = await session.execute(existing_wizard)
+        if not result.scalar_one_or_none():
+            hashed_password = generate_password_hash('cogitoergosum')
+            wizard_user = User(login='wizard', hashed_password=hashed_password, email='wizard@ratio.org', first_name='David', last_name='Copperfield')
+            session.add(wizard_user)
+            await session.commit()
 
 
 @pytest.fixture(scope='session')
