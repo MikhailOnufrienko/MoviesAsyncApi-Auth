@@ -9,7 +9,7 @@ from . import parametrize
         'new_user, expected',
         parametrize.USER_TO_REGISTER
 )
-@pytest.mark.usefixtures("create_schema", "prepare_db", "create_user")
+@pytest.mark.usefixtures("create_schema", "create_tables", "create_user")
 async def test_register_user(new_user, expected):
     response = client.post(
         '/api/v1/auth/user/register',
@@ -24,69 +24,25 @@ async def test_register_user(new_user, expected):
     assert data == expected.get('data')
 
 
-# def test_login_exists():
-#     user = UserRegistration(
-#         login='descartes', password='cogitoergosum', email='descartes@ratio.org'
-#     )
-#     response = client.post(
-#         '/api/v1/auth/user/register',
-#         json = {
-#             'login': user.login,
-#             'email': user.email,
-#             'password': user.password
-#         },
-#     )
-#     assert response.status_code == 400
-#     assert response.json() == {
-#         'detail': 'Пользователь с таким логином уже зарегистрирован.'
-#     }
-
-
-# def test_email_exists():
-#     user = UserRegistration(
-#         login='stevenpinker', password='violencedeclines', email='descartes@ratio.org'
-#     )
-#     response = client.post(
-#         '/api/v1/auth/user/register',
-#         json = {
-#             'login': user.login,
-#             'email': user.email,
-#             'password': user.password
-#         },
-#     )
-#     assert response.status_code == 400
-#     assert response.json() == {
-#         'detail': 'Пользователь с таким email уже зарегистрирован.'
-#     }
-
-
-# def test_password_is_incorrect():
-#     user = UserLogin(login='descartes', password='wrongpassword')
-#     response = client.post(
-#         '/api/v1/auth/user/login',
-#         json = {
-#             'login': user.login,
-#             'password': user.password
-#         }
-#     )
-#     assert response.status_code == 401, response.text
-#     assert response.json() == {'detail': 'Логин или пароль не верен.'}
-
-
-# def test_login_user():
-#     user = UserLogin(login='descartes', password='cogitoergosum')
-#     response = client.post(
-#         '/api/v1/auth/user/login',
-#         json = {
-#             'login': user.login,
-#             'password': user.password
-#         }
-#     )
-#     data = response.json()
-#     assert response.status_code == 200, response.text
-#     assert data == 'Вы вошли в свою учётную запись.'
-#     assert 'X-Access-Token' in response.headers
-#     assert 'X-Refresh-Token' in response.headers
+@pytest.mark.parametrize(
+        'user, expected',
+        parametrize.USER_TO_LOGIN
+)
+@pytest.mark.usefixtures("create_schema", "create_tables", "create_user")
+def test_login_user(user, expected):
+    response = client.post(
+        '/api/v1/auth/user/login',
+        json = {
+            'login': user.login,
+            'password': user.password
+        }
+    )
+    data = response.json()
+    assert response.status_code == expected.get('status_code'), response.text
+    assert data == expected.get('data')
+    if response.status_code == 200:
+        assert 'X-Access-Token' in response.headers 
+        assert 'X-Refresh-Token' in response.headers
 
 
 # def test_logout_user(login_user):

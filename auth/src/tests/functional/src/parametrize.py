@@ -1,8 +1,4 @@
-
-
-
-
-from auth.schemas.entity import UserRegistration
+from auth.schemas.entity import UserLogin, UserRegistration
 
 
 USER_TO_REGISTER = [
@@ -34,3 +30,22 @@ USER_TO_REGISTER = [
         'data': {'error': 'Пользователь с email wizard@ratio.org уже зарегистрирован.'}
     }),
 ]
+
+USER_TO_LOGIN = [
+    (UserLogin(
+        login='wizard',
+        password='cogitoergosum'
+    ),
+    {
+        'status_code': 200,
+        'data': {'success': 'Вы вошли в свою учётную запись.'}
+    }),
+    (UserLogin(
+        login='wizard',
+        password='cogitoergoproxy'
+    ),
+    {
+        'status_code': 401,
+        'data': {'error': 'Логин или пароль не верен.'}
+    })
+    ]

@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import AsyncGenerator
 from sqlalchemy import select, text
 
@@ -7,19 +6,17 @@ import asyncio
 import pytest
 from httpx import AsyncClient
 from fastapi.testclient import TestClient
+from redis.asyncio import client as redis_client
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.pool import NullPool
 from werkzeug.security import generate_password_hash
 
 from auth.src.models.entity import User, metadata_obj
 from auth.src.db.postgres import get_postgres_session
+from auth.src.db.redis import get_redis
 from auth.main import app
 from auth.src.tests.functional.config import settings
-
-
-logger = logging.getLogger(name='__name__')
 
 
 DATABASE_DSN: str = 'postgresql+asyncpg://{user}:{password}@{host}:{port}/{name}'.format(
@@ -46,6 +43,19 @@ async def override_get_postgres_session() -> AsyncSession:
 
 app.dependency_overrides[get_postgres_session] = override_get_postgres_session
 
+redis: redis_client.Redis = redis_client.Redis(
+    host=settings.TEST_REDIS_HOST,
+    port=settings.TEST_REDIS_PORT,
+    db=settings.TEST_REDIS_DB
+)
+
+
+async def override_get_redis() -> redis_client.Redis:
+    return redis
+
+
+app.dependency_overrides[get_redis] = override_get_redis
+
 
 @pytest.fixture(autouse=True, scope='session')
 async def create_schema():
@@ -56,7 +66,7 @@ async def create_schema():
 
 
 @pytest.fixture(scope='session')
-async def prepare_db(create_schema):
+async def create_tables(create_schema):
     async with async_engine.begin() as conn:
         await conn.run_sync(metadata_obj.create_all)
     yield
@@ -65,7 +75,7 @@ async def prepare_db(create_schema):
 
 
 @pytest.fixture(scope='session')
-async def create_user(prepare_db):
+async def create_user(create_tables):
     async with async_session() as session:
         existing_wizard = select(User.login).filter(User.login == "wizard")
         result = await session.execute(existing_wizard)

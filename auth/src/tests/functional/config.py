@@ -12,6 +12,9 @@ class TestSettings(BaseSettings):
     TEST_DB_USER: str
     TEST_DB_PASSWORD: str
     TEST_DB_NAME: str = 'auth_test'
+    TEST_REDIS_HOST: str = '127.0.0.1'
+    TEST_REDIS_PORT: int = 6379
+    TEST_REDIS_DB: int = 1
     
     class Config:
         env_file = '.env'
