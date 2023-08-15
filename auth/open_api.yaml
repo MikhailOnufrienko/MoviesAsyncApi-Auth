@@ -43,7 +43,7 @@ paths:
           description: Неверные учетные данные
         '400':
           description: Некорректный запрос
-  /api/v1/auth/user/refresh:
+  /api/v1/auth/{user_id}/refresh:
     post:
       tags:
         - user

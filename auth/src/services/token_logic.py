@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from typing import Annotated
+from fastapi import HTTPException, Header
 
 from jose import jwt
 from redis.asyncio import client
@@ -74,3 +76,37 @@ async def add_invalid_access_token_to_cache(
 async def get_user_id_by_token(access_token: str) -> str:
     claims = jwt.get_unverified_claims(access_token)
     return claims['sub']
+
+
+async def refresh_tokens(
+    user_id: str, old_access_token: str, old_refresh_token: str, cache: client.Redis
+) -> tuple[str, str]:
+    if await check_old_token_equal_stored_token(user_id, old_refresh_token, cache):
+        new_access_token, new_refresh_token = await generate_tokens(user_id)
+        await save_refresh_token_to_cache(user_id, new_refresh_token, cache)
+        await add_invalid_access_token_to_cache(old_access_token, cache)
+        return new_access_token, new_refresh_token
+    
+
+async def check_old_token_equal_stored_token(
+        user_id: str, old_token: str, cache: client.Redis
+) -> bool:
+    stored_token: bytes = await cache.get(user_id)
+    if not stored_token or stored_token.decode() != old_token:
+        raise HTTPException(
+            status_code=400,
+            detail='Недействительный refresh-токен. Требуется пройти аутентификацию.'
+        )
+    return True
+
+
+async def get_token_authorization(authorization: Annotated[str, Header()]) -> dict:
+    if not authorization:
+        return {'error': 'Отсутствует токен. Авторизуйтесь снова.'}
+    try:
+        scheme, token = authorization.split(' ')
+        if scheme.lower() != 'bearer':
+            return {'error': 'Недействительная схема авторизации. Авторизуйтесь снова.'}
+        return {'success': 'Вы вышли из учётной записи.'}
+    except Exception:
+        return {'error': 'Недействительный токен. Авторизуйтесь снова.'}

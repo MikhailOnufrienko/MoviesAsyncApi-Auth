@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Header, Request
 from redis.asyncio import client
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,35 +16,33 @@ default_role_name: str = 'registered user'
 
 
 async def create_user(user: UserRegistration, db: AsyncSession) -> str:
-    if (await check_login_not_exists(user.login, db)
-        and await check_email_not_exists(user.email, db)):
-        success = await save_user_to_database(user, db)
-        return success
+    result = await check_login_not_exists(user.login, db)
+    if isinstance(result, dict):
+        return result
+    result = await check_email_not_exists(user.email, db)
+    if isinstance(result, dict):
+        return result
+    await save_user_to_database(user, db)
+    return {'success': 'Вы успешно зарегистрировались.'}
 
 
-async def check_login_not_exists(login: str, db: AsyncSession) -> bool:
+async def check_login_not_exists(login: str, db: AsyncSession) -> bool | dict:
     query = select(User.login).filter(User.login == login)
     result = await db.execute(query)
     if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=400,
-            detail='Пользователь с таким логином уже зарегистрирован.'
-        )
+        return {'error': f'Пользователь с логином {login} уже зарегистрирован.'}
     return True
     
 
-async def check_email_not_exists(email: str, db: AsyncSession) -> bool:
+async def check_email_not_exists(email: str, db: AsyncSession) -> bool | dict:
     query = select(User.email).filter(User.email == email)
     result = await db.execute(query)
     if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=400,
-            detail='Пользователь с таким email уже зарегистрирован.'
-        )
+        return {'error': f'Пользователь с email {email} уже зарегистрирован.'}
     return True
 
 
-async def save_user_to_database(user: UserRegistration, db: AsyncSession) -> str:
+async def save_user_to_database(user: UserRegistration, db: AsyncSession) -> None:
     hashed_password = generate_password_hash(user.password)
     new_user = User(
         login=user.login,
@@ -55,7 +54,6 @@ async def save_user_to_database(user: UserRegistration, db: AsyncSession) -> str
     db.add(new_user)
     await db.commit()
     await fill_in_user_profile_table(db, new_user)
-    return "Вы успешно зарегистрировались."
 
 
 async def login_user(
@@ -63,19 +61,20 @@ async def login_user(
     user: UserLogin,
     db: AsyncSession,
     cache: client.Redis
-) -> tuple:
+) -> dict:
     if await check_credentials_correct(user.login, user.password, db):
         user_id = await get_user_id_by_login(user, db)
         user_id_as_string = str(user_id)
         access_token, refresh_token = await token_logic.generate_tokens(user_id_as_string)
         await token_logic.save_refresh_token_to_cache(user_id_as_string, refresh_token, cache)
         await save_login_data_to_db(request, user_id, db)
-        success = "Вы вошли в свою учётную запись."
+        success = {'success': 'Вы вошли в свою учётную запись.'}
         headers = {
             'X-Access-Token': access_token,
             'X-Refresh-Token': refresh_token
         }
-        return success, headers
+        return {'success': success, 'headers': headers}
+    return {'error': 'Логин или пароль не верен.'}
 
 
 async def check_credentials_correct(login: str, password: str, db: AsyncSession) -> bool:
@@ -89,7 +88,7 @@ async def check_credentials_correct(login: str, password: str, db: AsyncSession)
         hashed_password = result.scalar_one()
         if check_password_hash(hashed_password, password):
             return True
-    raise HTTPException(status_code=401, detail='Логин или пароль не верен.')
+    return False
 
 
 async def get_user_id_by_login(user: UserLogin, db: AsyncSession) -> UUID:
@@ -125,8 +124,14 @@ async def fill_in_user_profile_table(db: AsyncSession, user: User) -> None:
     await db.commit()
 
 
-async def logout_user(tokens: Token, cache: client.Redis) -> str:
-    await token_logic.add_invalid_access_token_to_cache(tokens.access_token, cache)
-    user_id = await token_logic.get_user_id_by_token(tokens.access_token)
+async def logout_user(
+    authorization: Annotated[str, Header()], cache: client.Redis
+) -> dict:
+    result = await token_logic.get_token_authorization(authorization)
+    if result.get('error'):
+        return result
+    access_token = result.get('token')
+    await token_logic.add_invalid_access_token_to_cache(access_token, cache)
+    user_id = await token_logic.get_user_id_by_token(access_token)
     await token_logic.delete_refresh_token_from_cache(cache, user_id)
-    return 'Вы вышли из учётной записи.'
+    return {'success': 'Вы вышли из учётной записи.'}

@@ -1,8 +1,10 @@
+from fastapi.responses import JSONResponse
 import pytest
 
 from auth.schemas.entity import Token, UserLogin, UserRegistration
 from auth.src.tests.conftest import client
-from . import parametrize
+from auth.src.services import token_logic, user_logic
+from . import parametrize, utils
 
 
 @pytest.mark.parametrize(
@@ -29,7 +31,7 @@ async def test_register_user(new_user, expected):
         parametrize.USER_TO_LOGIN
 )
 @pytest.mark.usefixtures("create_schema", "create_tables", "create_user")
-def test_login_user(user, expected):
+async def test_login_user(user, expected):
     response = client.post(
         '/api/v1/auth/user/login',
         json = {
@@ -43,34 +45,20 @@ def test_login_user(user, expected):
     if response.status_code == 200:
         assert 'X-Access-Token' in response.headers 
         assert 'X-Refresh-Token' in response.headers
-
-
-# def test_logout_user(login_user):
-#     acc, ref = login_user
-#     tokens = Token(
-#             access_token=acc,
-#             refresh_token=ref
-#     )
-#     response = client.post(
-#         '/api/v1/auth/user/logout',
-#         json = {'access_token': tokens.access_token,
-#                 'refresh_token': tokens.refresh_token}
-#     )
-#     data = response.json()
-#     assert response.status_code == 200, response.text
-#     assert data == 'Вы вышли из учётной записи.'
-
-
-# @pytest.fixture
-# def login_user():
-#     # response = client.post(
-#     #     '/api/v1/auth/user/login',
-#     #     json = {
-#     #         'login': 'descartes',
-#     #         'password': 'cogitoergosum'
-#     #     }
-#     # )
-#     access_token = '1233qwed12as'
-#     refresh_token = '123qgwe12ads'
-#     yield (access_token, refresh_token)
     
+
+@pytest.mark.parametrize(
+        'user_header, expected',
+        parametrize.USER_TO_LOGOUT
+)
+@pytest.mark.usefixtures("create_schema", "create_tables", "create_user")
+async def test_logout_user(user_header, expected, monkeypatch):
+    
+    monkeypatch.setattr(user_logic, 'logout_user', utils.mock_logout_user)
+    
+    response = client.post(
+        '/api/v1/auth/user/logout',
+        headers=user_header
+    )
+    assert response.status_code == expected['status_code']
+    assert response.json() == expected['data']
