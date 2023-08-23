@@ -72,10 +72,9 @@ async def refresh_tokens(user_id: str, tokens: Token, cache: REDIS_DEPEND) -> To
     - **refresh_token**: новый токен для обновления токена авторизации
 
     """
-    new_access_token, new_refresh_roken = await token_logic.refresh_tokens(
+    result = await token_logic.refresh_tokens(
         user_id, tokens.access_token, tokens.refresh_token, cache
     )
-    return Token(
-        access_token=new_access_token,
-        refresh_token=new_refresh_roken
-    )
+    if result.get('error'):
+        return JSONResponse(content=result, status_code=400)
+    return JSONResponse(content=result, status_code=201)

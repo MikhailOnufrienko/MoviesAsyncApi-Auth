@@ -53,12 +53,31 @@ async def test_login_user(user, expected):
 )
 @pytest.mark.usefixtures("create_schema", "create_tables", "create_user")
 async def test_logout_user(user_header, expected, monkeypatch):
-    
     monkeypatch.setattr(user_logic, 'logout_user', utils.mock_logout_user)
-    
     response = client.post(
         '/api/v1/auth/user/logout',
         headers=user_header
     )
     assert response.status_code == expected['status_code']
     assert response.json() == expected['data']
+
+
+@pytest.mark.parametrize(
+        'tokens, expected',
+        parametrize.REFRESH_TOKENS
+)
+async def test_refresh_tokens(tokens, expected, monkeypatch):
+    monkeypatch.setattr(
+        token_logic,
+        'refresh_tokens',
+        utils.mock_refresh_tokens
+    )
+    test_user_id = 'f9da64a4-c7c0-4bf2-8043-a1e725343bdf'
+    response = client.post(
+        f'/api/v1/auth/user/{test_user_id}/refresh',
+        json={
+            'access_token': tokens.access_token,
+            'refresh_token': tokens.refresh_token
+        })
+    assert response.json() == expected['data']
+    assert response.status_code == expected['status_code']

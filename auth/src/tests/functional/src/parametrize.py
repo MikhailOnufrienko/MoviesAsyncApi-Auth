@@ -1,4 +1,4 @@
-from auth.schemas.entity import UserLogin, UserRegistration
+from auth.schemas.entity import Token, UserLogin, UserRegistration
 
 
 USER_TO_REGISTER = [
@@ -79,4 +79,27 @@ USER_TO_LOGOUT = [
         'data': {'error': 'Недействительный токен. Авторизуйтесь снова.'}
         }
     ),
+]
+
+REFRESH_TOKENS = [
+    (
+        Token(
+            access_token='good.old.accesstoken',
+            refresh_token='good.old.refreshtoken'
+        ),
+        {
+        'status_code': 201,
+        'data': {'access': 'new_access_token', 'refresh': 'new_refresh_token'}
+        }
+    ),
+    (
+        Token(
+            access_token='good.old.accesstoken',
+            refresh_token='bad.old.refreshtoken'
+        ),
+        {
+        'status_code': 400,
+        'data': {'error': 'Недействительный refresh-токен. Требуется пройти аутентификацию.'}
+        }
+    )
 ]

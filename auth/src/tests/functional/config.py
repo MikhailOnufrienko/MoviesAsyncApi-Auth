@@ -14,7 +14,7 @@ class TestSettings(BaseSettings):
     TEST_DB_NAME: str = 'auth_test'
     TEST_REDIS_HOST: str = '127.0.0.1'
     TEST_REDIS_PORT: int = 6379
-    TEST_REDIS_DB: int = 1
+    TEST_REDIS_DB: int = 0
     
     class Config:
         env_file = '.env'

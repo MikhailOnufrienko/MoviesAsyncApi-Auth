@@ -81,7 +81,10 @@ async def create_user():
         result = await session.execute(existing_wizard)
         if not result.scalar_one_or_none():
             hashed_password = generate_password_hash('cogitoergosum')
-            wizard_user = User(login='wizard', hashed_password=hashed_password, email='wizard@ratio.org', first_name='David', last_name='Copperfield')
+            wizard_user = User(
+                login='wizard', hashed_password=hashed_password,
+                email='wizard@ratio.org', first_name='David', last_name='Copperfield'
+            )
             session.add(wizard_user)
             await session.commit()
 
