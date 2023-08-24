@@ -20,6 +20,12 @@ class Token(BaseModel):
     refresh_token: str
 
 
+class ChangeCredentials(BaseModel):
+    new_login: str | None
+    old_password: str
+    new_password: str | None
+
+
 class LoginHistoryToDB(BaseModel):
     user_id: str
     user_agent: str

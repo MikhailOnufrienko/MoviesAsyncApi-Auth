@@ -1,4 +1,4 @@
-from auth.schemas.entity import Token, UserLogin, UserRegistration
+from auth.schemas.entity import ChangeCredentials, Token, UserLogin, UserRegistration
 
 
 USER_TO_REGISTER = [
@@ -100,6 +100,42 @@ REFRESH_TOKENS = [
         {
         'status_code': 400,
         'data': {'error': 'Недействительный refresh-токен. Требуется пройти аутентификацию.'}
+        }
+    )
+]
+
+CHANGE_CREDENTIALS = [
+    (
+        ChangeCredentials(
+            new_login='cool_new_login99',
+            old_password='old_pass_123',
+            new_password='seCuRe_nEw_pAss_987'
+        ),
+        {
+        'status_code': 200,
+        'data': {'success': 'Данные успешно изменены.'}
+        }
+    ),
+    (
+        ChangeCredentials(
+            new_login='cool_new_login99',
+            old_password='wrong_old_pass',
+            new_password='seCuRe_nEw_pAss_987'
+        ),
+        {
+        'status_code': 401,
+        'data': {'error': 'Неверный старый пароль.'}
+        }
+    ),
+    (
+        ChangeCredentials(
+            new_login='already_existing_login',
+            old_password='old_pass_123',
+            new_password='seCuRe_nEw_pAss_987'
+        ),
+        {
+        'status_code': 409,
+        'data': {'error': 'Указанный новый логин уже существует в системе.'}
         }
     )
 ]

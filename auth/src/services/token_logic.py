@@ -105,6 +105,6 @@ async def get_token_authorization(authorization: Annotated[str, Header()]) -> di
         scheme, token = authorization.split(' ')
         if scheme.lower() != 'bearer':
             return {'error': 'Недействительная схема авторизации. Авторизуйтесь снова.'}
-        return {'success': 'Вы вышли из учётной записи.'}
+        return {'success': 'Вы вышли из учётной записи.', 'token': token}
     except Exception:
         return {'error': 'Недействительный токен. Авторизуйтесь снова.'}

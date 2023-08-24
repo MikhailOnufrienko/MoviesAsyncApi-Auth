@@ -78,6 +78,24 @@ async def test_refresh_tokens(tokens, expected, monkeypatch):
         json={
             'access_token': tokens.access_token,
             'refresh_token': tokens.refresh_token
-        })
+        }
+    )
+    assert response.json() == expected['data']
+    assert response.status_code == expected['status_code']
+
+
+@pytest.mark.parametrize(
+        'new_credentials, expected',
+        parametrize.CHANGE_CREDENTIALS
+)
+async def test_change_credentials(new_credentials, expected):
+    response = client.put(
+        '/api/v1/auth/user/change_credentials',
+        json={
+            'new_login': new_credentials.new_login,
+            'old_password': new_credentials.old_password,
+            'new_password': new_credentials.new_password
+        }
+    )
     assert response.json() == expected['data']
     assert response.status_code == expected['status_code']

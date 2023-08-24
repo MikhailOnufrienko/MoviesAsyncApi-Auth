@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from redis.asyncio import client
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.schemas.entity import Token, UserLogin, UserRegistration
+from auth.schemas.entity import ChangeCredentials, Token, UserLogin, UserRegistration
 from auth.src.db.postgres import get_postgres_session
 from auth.src.db.redis import get_redis
 from auth.src.services import token_logic, user_logic
@@ -78,3 +78,24 @@ async def refresh_tokens(user_id: str, tokens: Token, cache: REDIS_DEPEND) -> To
     if result.get('error'):
         return JSONResponse(content=result, status_code=400)
     return JSONResponse(content=result, status_code=201)
+
+@router.patch(
+        '/change_credentials',
+        status_code=200,
+        summary='Запрос на изменение логина и/или пароля.'
+)
+async def change_credentials(
+    credentials: ChangeCredentials,
+    authorization: Annotated[str, Header()],
+    db: DB_SESSION_DEPEND,
+    cache: REDIS_DEPEND
+) -> JSONResponse:
+    """
+    Возвращает уведомление об успешном изменении учётных данных либо ошибку."
+    """
+    result = await user_logic.change_credentials(credentials, authorization, db, cache)
+    if result.get('pass_error'):
+        return JSONResponse(content=result, status_code=401)
+    if result.get('login_error'):
+        return JSONResponse(content=result, status_code=409)
+    return JSONResponse(content=result, status_code=200)

@@ -6,7 +6,7 @@ from redis.asyncio import client
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.security import generate_password_hash, check_password_hash
-from auth.schemas.entity import Token, UserRegistration, UserLogin
+from auth.schemas.entity import ChangeCredentials, Token, UserRegistration, UserLogin
 from auth.src.models.entity import User, LoginHistory
 from auth.src.services import token_logic
 from auth.src.models.entity import User, Role, UserProfile
@@ -30,7 +30,7 @@ async def check_login_not_exists(login: str, db: AsyncSession) -> bool | dict:
     query = select(User.login).filter(User.login == login)
     result = await db.execute(query)
     if result.scalar_one_or_none():
-        return {'error': f'Пользователь с логином {login} уже зарегистрирован.'}
+        return {'login_error': f'Пользователь с логином {login} уже зарегистрирован.'}
     return True
     
 
@@ -66,7 +66,9 @@ async def login_user(
         user_id = await get_user_id_by_login(user, db)
         user_id_as_string = str(user_id)
         access_token, refresh_token = await token_logic.generate_tokens(user_id_as_string)
-        await token_logic.save_refresh_token_to_cache(user_id_as_string, refresh_token, cache)
+        await token_logic.save_refresh_token_to_cache(
+            user_id_as_string, refresh_token, cache
+        )
         await save_login_data_to_db(request, user_id, db)
         success = {'success': 'Вы вошли в свою учётную запись.'}
         headers = {
@@ -89,6 +91,21 @@ async def check_credentials_correct(login: str, password: str, db: AsyncSession)
         if check_password_hash(hashed_password, password):
             return True
     return False
+
+
+async def check_password_correct_and_return_id_or_error(
+    access_token: str, password: str, db: AsyncSession
+) -> dict:
+    user_id = await token_logic.get_user_id_by_token(access_token)
+    user_login = await get_user_login(user_id, db)
+    query_for_password = select(
+        User.hashed_password
+    ).filter(User.login == user_login)
+    result = await db.execute(query_for_password)
+    hashed_password = result.scalar_one()
+    if check_password_hash(hashed_password, password):
+        return {'user_id': user_id, 'user_login': user_login}
+    return {'pass_error': 'Неверный старый пароль.'}
 
 
 async def get_user_id_by_login(user: UserLogin, db: AsyncSession) -> UUID:
@@ -135,3 +152,52 @@ async def logout_user(
     user_id = await token_logic.get_user_id_by_token(access_token)
     await token_logic.delete_refresh_token_from_cache(cache, user_id)
     return {'success': 'Вы вышли из учётной записи.'}
+
+
+async def change_credentials(
+    credentials: ChangeCredentials,
+    authorization: Annotated[str, Header()],
+    db: AsyncSession,
+    cache: client.Redis
+) -> dict:
+    result = await token_logic.get_token_authorization(authorization)
+    if result.get('error'):
+        return result
+    access_token = result.get('token')
+    result =  await check_password_correct_and_return_id_or_error(
+        access_token, credentials.old_password, db
+    )
+    if result.get('pass_error'):
+        return result
+    user_id = result.get('user_id')
+    current_user_login = result.get('user_login')
+    if (credentials.new_login
+        and credentials.new_login != ''
+        and credentials.new_login != current_user_login):
+        result = await check_login_not_exists(credentials.new_login, db)
+        if isinstance(result, dict):
+            return result
+    result = await save_changed_credentials(credentials, user_id, db)
+    return result
+
+
+async def get_user_login(user_id: str, db: AsyncSession) -> str:
+    query = select(User.login).filter(User.id == user_id)
+    result = await db.execute(query)
+    login = result.scalar_one()
+    return login
+
+
+async def save_changed_credentials(
+    credentials: ChangeCredentials, user_id: str, db: AsyncSession
+) -> dict:
+    query = select(User).filter(User.id == user_id)
+    user = await db.execute(query)
+    user = user.scalar_one_or_none()
+    if credentials.new_password:
+        hashed_password = generate_password_hash(credentials.new_password)
+        user.hashed_password = hashed_password
+    if credentials.new_login:
+            user.login = credentials.new_login
+    await db.commit()
+    return {'success': 'Данные успешно изменены.'}
