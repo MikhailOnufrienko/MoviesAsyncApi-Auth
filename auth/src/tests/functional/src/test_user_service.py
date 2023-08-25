@@ -88,14 +88,18 @@ async def test_refresh_tokens(tokens, expected, monkeypatch):
         'new_credentials, expected',
         parametrize.CHANGE_CREDENTIALS
 )
-async def test_change_credentials(new_credentials, expected):
-    response = client.put(
+async def test_change_credentials(new_credentials, expected, monkeypatch):
+    monkeypatch.setattr(
+        user_logic, 'change_credentials', utils.mock_change_credentials
+    )
+    response = client.patch(
         '/api/v1/auth/user/change_credentials',
         json={
             'new_login': new_credentials.new_login,
             'old_password': new_credentials.old_password,
             'new_password': new_credentials.new_password
-        }
+        },
+        headers={'authorization': 'very.secure.jwt-token555'}
     )
     assert response.json() == expected['data']
     assert response.status_code == expected['status_code']

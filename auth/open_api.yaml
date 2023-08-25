@@ -108,7 +108,7 @@ paths:
         '200':
           description: Данные успешно изменены.
         '401':
-          description: Неверный старый пароль.
+          description: Ошибка аутентификации или авторизации.
         '409':
           description: Указанный новый логин уже существует в системе.
   /api/v1/auth/user/login_history:

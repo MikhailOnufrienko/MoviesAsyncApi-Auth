@@ -17,8 +17,8 @@ USER_TO_REGISTER = [
         email='wizard@ratio.org'
     ),
     {
-        'status_code': 400,
-        'data': {'error': 'Пользователь с логином wizard уже зарегистрирован.'}
+        'status_code': 409,
+        'data': {'login_error': 'Пользователь с логином wizard уже зарегистрирован.'}
     }),
     (UserRegistration(
         login='anna-varney',
@@ -26,8 +26,8 @@ USER_TO_REGISTER = [
         email='wizard@ratio.org'
     ),
     {
-        'status_code': 400,
-        'data': {'error': 'Пользователь с email wizard@ratio.org уже зарегистрирован.'}
+        'status_code': 401,
+        'data': {'email_error': 'Пользователь с email wizard@ratio.org уже зарегистрирован.'}
     }),
 ]
 
@@ -124,7 +124,7 @@ CHANGE_CREDENTIALS = [
         ),
         {
         'status_code': 401,
-        'data': {'error': 'Неверный старый пароль.'}
+        'data': {'pass_error': 'Неверный старый пароль.'}
         }
     ),
     (
@@ -135,7 +135,7 @@ CHANGE_CREDENTIALS = [
         ),
         {
         'status_code': 409,
-        'data': {'error': 'Указанный новый логин уже существует в системе.'}
+        'data': {'login_error': 'Указанный новый логин уже существует в системе.'}
         }
     )
 ]

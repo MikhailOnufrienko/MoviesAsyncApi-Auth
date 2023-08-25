@@ -23,8 +23,10 @@ REDIS_DEPEND = Annotated[client.Redis, Depends(get_redis)]
 async def register_user(user: UserRegistration, db: DB_SESSION_DEPEND) -> JSONResponse:
     """Возвращает уведомление об успешной регистрации."""
     result = await user_logic.create_user(user, db)
-    if result.get('error'):
-        return JSONResponse(content=result, status_code=400)
+    if result.get('login_error'):
+        return JSONResponse(content=result, status_code=409)
+    if result.get('email_error'):
+        return JSONResponse(content=result, status_code=401)
     return JSONResponse(content=result, status_code=201)
 
 
@@ -94,6 +96,8 @@ async def change_credentials(
     Возвращает уведомление об успешном изменении учётных данных либо ошибку."
     """
     result = await user_logic.change_credentials(credentials, authorization, db, cache)
+    if result.get('error'):
+        return JSONResponse(content=result, status_code=401)
     if result.get('pass_error'):
         return JSONResponse(content=result, status_code=401)
     if result.get('login_error'):

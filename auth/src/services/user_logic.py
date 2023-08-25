@@ -38,7 +38,7 @@ async def check_email_not_exists(email: str, db: AsyncSession) -> bool | dict:
     query = select(User.email).filter(User.email == email)
     result = await db.execute(query)
     if result.scalar_one_or_none():
-        return {'error': f'Пользователь с email {email} уже зарегистрирован.'}
+        return {'email_error': f'Пользователь с email {email} уже зарегистрирован.'}
     return True
 
 
