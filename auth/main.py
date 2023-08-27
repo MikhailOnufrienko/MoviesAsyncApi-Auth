@@ -5,7 +5,7 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from auth.src.core.config import app_settings
 from auth.src.db.redis import get_redis
 from auth.src.db.postgres import get_postgres_session
-from auth.src.api.v1 import user
+from auth.src.api.v1 import role, user
 
 
 app = FastAPI(
@@ -48,6 +48,7 @@ async def shutdown() -> None:
 
 
 app.include_router(user.router, prefix='/api/v1/auth/user', tags=['user'])
+app.include_router(role.router, prefix='/api/v1/auth/access', tags=['access'])
 
 
 if __name__ == '__main__':

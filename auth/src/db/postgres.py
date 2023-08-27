@@ -1,3 +1,6 @@
+from typing import Annotated
+
+from fastapi import Depends
 from auth.src.core.config import app_settings
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -19,3 +22,6 @@ async_session: AsyncSession = async_sessionmaker(async_engine, expire_on_commit=
 async def get_postgres_session() -> AsyncSession:
     async with async_session() as session:
         yield session 
+
+
+DB_SESSION_DEPEND = Annotated[AsyncSession, Depends(get_postgres_session)]

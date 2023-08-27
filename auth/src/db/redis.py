@@ -1,3 +1,5 @@
+from typing import Annotated
+from fastapi import Depends
 from redis.asyncio import client
 
 from auth.src.core.config import app_settings
@@ -9,3 +11,6 @@ redis: client.Redis = client.Redis(
 )
 async def get_redis() -> client.Redis:
     return redis
+
+
+REDIS_DEPEND = Annotated[client.Redis, Depends(get_redis)]

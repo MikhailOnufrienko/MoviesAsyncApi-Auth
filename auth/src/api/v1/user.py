@@ -1,23 +1,16 @@
 from typing import Annotated
 
 from fastapi import Header, Request, APIRouter
-from fastapi import Depends
 from fastapi.responses import JSONResponse
-from redis.asyncio import client
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.schemas.entity import (ChangeCredentials, LoginHistoryResponse,
                                  Token, UserLogin, UserRegistration)
-from auth.src.db.postgres import get_postgres_session
-from auth.src.db.redis import get_redis
+from auth.src.db.postgres import DB_SESSION_DEPEND
+from auth.src.db.redis import REDIS_DEPEND
 from auth.src.services import token_logic, user_logic
 
 
 router = APIRouter()
-
-DB_SESSION_DEPEND = Annotated[AsyncSession, Depends(get_postgres_session)]
-
-REDIS_DEPEND = Annotated[client.Redis, Depends(get_redis)]
 
 
 @router.post('/register', status_code=201, summary='Регистрация нового пользователя')

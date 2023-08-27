@@ -207,7 +207,7 @@ async def save_changed_credentials(
 async def get_login_history(
     authorization: Annotated[str, Header()],
     db: AsyncSession
-) -> list[dict]:
+) -> dict:
     result = await token_logic.get_token_authorization(authorization)
     if result.get('error'):
         return result
@@ -220,4 +220,3 @@ async def get_login_history(
             'login_dt': record.login_dt.isoformat()
     } for record in login_history]
     }
-    
