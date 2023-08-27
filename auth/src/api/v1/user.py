@@ -6,7 +6,8 @@ from fastapi.responses import JSONResponse
 from redis.asyncio import client
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.schemas.entity import ChangeCredentials, Token, UserLogin, UserRegistration
+from auth.schemas.entity import (ChangeCredentials, LoginHistoryResponse,
+                                 Token, UserLogin, UserRegistration)
 from auth.src.db.postgres import get_postgres_session
 from auth.src.db.redis import get_redis
 from auth.src.services import token_logic, user_logic
@@ -102,4 +103,21 @@ async def change_credentials(
         return JSONResponse(content=result, status_code=401)
     if result.get('login_error'):
         return JSONResponse(content=result, status_code=409)
+    return JSONResponse(content=result, status_code=200)
+
+
+@router.get(
+    '/login_history', status_code=200,
+    response_model=LoginHistoryResponse, summary='Получение истории входов в аккаунт.'
+)
+async def login_history(
+    authorization: Annotated[str, Header()],
+    db: DB_SESSION_DEPEND
+) -> JSONResponse:
+    """
+    Возвращает историю входов в аккаунт пользователя либо ошибку авторизации."
+    """
+    result = await user_logic.get_login_history(authorization, db)
+    if result.get('error'):
+        return JSONResponse(content=result, status_code=401)
     return JSONResponse(content=result, status_code=200)

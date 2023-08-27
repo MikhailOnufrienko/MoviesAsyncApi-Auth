@@ -30,3 +30,12 @@ class LoginHistoryToDB(BaseModel):
     user_id: str
     user_agent: str
     login_dt: datetime
+
+
+class LoginHistorySingleRecord(BaseModel):
+    user_agent: str
+    login_dt: datetime
+
+
+class LoginHistoryResponse(BaseModel):
+    login_history: list[LoginHistorySingleRecord]

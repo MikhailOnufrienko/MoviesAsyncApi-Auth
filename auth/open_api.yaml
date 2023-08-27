@@ -106,11 +106,11 @@ paths:
                   description: Новый пароль пользователя
       responses:
         '200':
-          description: Данные успешно изменены.
+          description: Данные успешно изменены
         '401':
-          description: Ошибка аутентификации или авторизации.
+          description: Ошибка аутентификации или авторизации
         '409':
-          description: Указанный новый логин уже существует в системе.
+          description: Указанный новый логин уже существует в системе
   /api/v1/auth/user/login_history:
     get:
       summary: Получение истории входов в аккаунт
@@ -134,7 +134,7 @@ paths:
                     device:
                       type: string
         '401':
-          description: Неверная аутентификация
+          description: Ошибка аутентификации или авторизации
   /api/v1/access/roles:
     get:
       summary: Просмотр всех ролей

@@ -36,7 +36,7 @@ class User(Base):
         self.email = email
 
     def __repr__(self) -> str:
-        return f'<User {self.login}>'
+        return f'{self.login}'
 
 
 class Role(Base):
@@ -77,7 +77,10 @@ class UserProfile(Base):
 class LoginHistory(Base):
     __tablename__ = 'login_history'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    id = Column(
+        UUID(as_uuid=True), primary_key=True,
+        default=uuid.uuid4, unique=True, nullable=False
+    )
     user_id = Column(UUID(as_uuid=True), ForeignKey('user.id'))
     user = relationship('User', back_populates='login_history')
     user_agent = Column(String(255))

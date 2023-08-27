@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
-from fastapi import HTTPException, Header, Request
+from fastapi import Header, Request
 from redis.asyncio import client
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.security import generate_password_hash, check_password_hash
-from auth.schemas.entity import ChangeCredentials, Token, UserRegistration, UserLogin
+from auth.schemas.entity import (ChangeCredentials, LoginHistoryResponse,
+                                 LoginHistorySingleRecord, UserRegistration, UserLogin)
 from auth.src.models.entity import User, LoginHistory
 from auth.src.services import token_logic
 from auth.src.models.entity import User, Role, UserProfile
@@ -201,3 +202,22 @@ async def save_changed_credentials(
             user.login = credentials.new_login
     await db.commit()
     return {'success': 'Данные успешно изменены.'}
+
+
+async def get_login_history(
+    authorization: Annotated[str, Header()],
+    db: AsyncSession
+) -> list[dict]:
+    result = await token_logic.get_token_authorization(authorization)
+    if result.get('error'):
+        return result
+    access_token = result.get('token')
+    user_id = await token_logic.get_user_id_by_token(access_token)
+    query = select(LoginHistory).where(LoginHistory.user_id == user_id)
+    login_history = await db.scalars(query)
+    return {'success': [{
+            'user_agent': record.user_agent,
+            'login_dt': record.login_dt.isoformat()
+    } for record in login_history]
+    }
+    
