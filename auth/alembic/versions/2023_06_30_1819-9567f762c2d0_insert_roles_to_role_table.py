@@ -9,6 +9,7 @@ import uuid
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql import column, table
 
 
 # revision identifiers, used by Alembic.
@@ -19,12 +20,11 @@ depends_on = None
 
 
 def upgrade() -> None:
-    role_table = sa.Table(
+    role_table = table(
         'role',
-        sa.MetaData(),
-        sa.Column('id', sa.UUID(), nullable=False),
-        sa.Column('name', sa.String(length=255), nullable=False),
-        sa.Column('description', sa.String(length=255), nullable=True),
+        column('id', sa.UUID(), nullable=False),
+        column('name', sa.String(length=255), nullable=False),
+        column('description', sa.String(length=255), nullable=True),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
         sa.UniqueConstraint('name'),

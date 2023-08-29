@@ -177,8 +177,6 @@ paths:
       responses:
         '201':
           description: Роль успешно создана
-        '400':
-          description: Некорректный запрос
         '401':
           description: Неверная аутентификация
         '403':

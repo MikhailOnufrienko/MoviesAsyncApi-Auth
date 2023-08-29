@@ -39,3 +39,16 @@ class LoginHistorySingleRecord(BaseModel):
 
 class LoginHistoryResponse(BaseModel):
     login_history: list[LoginHistorySingleRecord]
+
+
+class UserProfile(BaseModel):
+    user_id: UUID
+    registration_dt: datetime
+    active: bool
+    is_staff: bool
+    role_id: UUID
+
+
+class NewRole(BaseModel):
+    name: str
+    description: str

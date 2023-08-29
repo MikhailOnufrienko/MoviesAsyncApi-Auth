@@ -42,13 +42,17 @@ class User(Base):
 class Role(Base):
     __tablename__ = 'role'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    id = Column(
+        UUID(as_uuid=True), primary_key=True,
+        default=uuid.uuid4, unique=True, nullable=False
+    )
     name = Column(String(255), unique=True, nullable=False)
     description = Column(String(255))
     users = relationship('UserProfile', back_populates='role')
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, description: str) -> None:
         self.name = name
+        self.description = description
 
     def __repr__(self) -> str:
         return f'<Role {self.name}>'
