@@ -8,8 +8,9 @@ Create Date: 2023-06-30 18:19:39.333580
 import uuid
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.sql import column, table
+from sqlalchemy import Table
+
+from auth.src.models.entity import metadata_obj
 
 
 # revision identifiers, used by Alembic.
@@ -20,18 +21,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    role_table = table(
-        'role',
-        column('id', sa.UUID(), nullable=False),
-        column('name', sa.String(length=255), nullable=False),
-        column('description', sa.String(length=255), nullable=True),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('id'),
-        sa.UniqueConstraint('name'),
-        schema='auth'
-    )
+    role_table = Table('role', metadata_obj)
+
     op.bulk_insert(
-        role_table,
+       role_table,
         [
             {'id': uuid.uuid4(), 'name': 'guest', 'description': 'Анонимный пользователь.'},
             {'id': uuid.uuid4(), 'name': 'registered user', 'description': 'Зарегистрированный пользователь.'},
