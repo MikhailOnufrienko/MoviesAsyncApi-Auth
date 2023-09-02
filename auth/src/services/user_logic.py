@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 from fastapi import Header, Request
 from redis.asyncio import client
@@ -220,3 +220,15 @@ async def get_login_history(
             'login_dt': record.login_dt.isoformat()
     } for record in login_history]
     }
+
+
+async def get_user_profile_by_id_or_return_false(
+    id: str, db: AsyncSession
+) -> Optional[UserProfile]:
+    try:
+        query = select(UserProfile).where(UserProfile.user_id == id)
+        result = await db.execute(query)
+        user_profile = result.scalar_one_or_none()
+        return user_profile
+    except Exception:
+        return None

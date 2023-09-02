@@ -152,8 +152,6 @@ paths:
                 items:
                   type: object
                   properties:
-                    id:
-                      type: integer
                     name:
                       type: string
                     description:
@@ -204,8 +202,6 @@ paths:
       responses:
         '200':
           description: Роль успешно изменена
-        '400':
-          description: Некорректный запрос
         '401':
           description: Неверная аутентификация
         '403':
@@ -226,7 +222,7 @@ paths:
           schema:
             type: integer
       responses:
-        '204':
+        '200':
           description: Роль успешно удалена
         '401':
           description: Неверная аутентификация
@@ -234,8 +230,8 @@ paths:
           description: Отсутствуют необходимые права доступа
         '404':
           description: Роль не найдена
-  /api/v1/auth/user/{user_id}/role:
-    post:
+  /api/v1/auth/access/user/{user_id}/role:
+    patch:
       summary: Назначение роли пользователю по идентификатору
       tags:
         - access
@@ -255,42 +251,11 @@ paths:
             schema:
               type: object
               properties:
-                role_id:
-                  type: integer
+                role_name:
+                  type: string
       responses:
         '200':
           description: Роль успешно назначена пользователю
-        '400':
-          description: Некорректный запрос
-        '401':
-          description: Неверная аутентификация
-        '403':
-          description: Отсутствуют необходимые права доступа
-        '404':
-          description: Пользователь или роль не найдены
-  /api/v1/users/{user_id}/roles/{role_id}:
-    delete:
-      summary: Отзыв роли у пользователя по идентификаторам
-      tags:
-        - access
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: user_id
-          in: path
-          description: Идентификатор пользователя
-          required: true
-          schema:
-            type: integer
-        - name: role_id
-          in: path
-          description: Идентификатор роли
-          required: true
-          schema:
-            type: integer
-      responses:
-        '204':
-          description: Роль успешно отозвана
         '401':
           description: Неверная аутентификация
         '403':

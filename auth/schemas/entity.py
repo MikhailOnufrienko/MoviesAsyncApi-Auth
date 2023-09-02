@@ -49,6 +49,14 @@ class UserProfile(BaseModel):
     role_id: UUID
 
 
-class NewRole(BaseModel):
+class SingleRole(BaseModel):
     name: str
     description: str
+
+
+class AllRolesResponse(BaseModel):
+    roles: list[SingleRole]
+
+
+class RoleName(BaseModel):
+    name: str
