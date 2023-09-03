@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.pool import NullPool
 from werkzeug.security import generate_password_hash
 
-from auth.src.models.entity import User, metadata_obj
+from auth.src.models.entity import Role, User, metadata_obj
 from auth.src.db.postgres import get_postgres_session
 from auth.src.db.redis import get_redis
 from auth.main import app
@@ -77,15 +77,27 @@ async def create_tables():
 @pytest.fixture(scope='session')
 async def create_user():
     async with async_session() as session:
-        existing_wizard = select(User.login).filter(User.login == "wizard")
-        result = await session.execute(existing_wizard)
+        existing_user = select(User.login).where(User.login == "wizard")
+        result = await session.execute(existing_user)
         if not result.scalar_one_or_none():
             hashed_password = generate_password_hash('cogitoergosum')
-            wizard_user = User(
+            test_user = User(
                 login='wizard', hashed_password=hashed_password,
                 email='wizard@ratio.org', first_name='David', last_name='Copperfield'
             )
-            session.add(wizard_user)
+            session.add(test_user)
+            await session.commit()
+
+
+@pytest.fixture(scope='session')
+async def create_roles():
+    async with async_session() as session:
+        existing_roles = select(Role).filter(Role.name.like('test%'))
+        result = await session.execute(existing_roles)
+        if not result.all():
+            test_role_1 = Role(name='test_editor', description='description')
+            test_role_2 = Role(name='test_admin', description='description')
+            session.add_all([test_role_1, test_role_2])
             await session.commit()
 
 

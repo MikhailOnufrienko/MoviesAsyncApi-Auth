@@ -3,7 +3,7 @@ import pytest
 
 from auth.schemas.entity import Token, UserLogin, UserRegistration
 from auth.src.tests.conftest import client
-from auth.src.services import token_logic, user_logic
+from auth.src.services import access_logic, token_logic, user_logic
 from . import parametrize, utils
 
 
@@ -72,22 +72,19 @@ async def test_refresh_tokens(tokens, expected, monkeypatch):
         'refresh_tokens',
         utils.mock_refresh_tokens
     )
-    test_user_id = 'f9da64a4-c7c0-4bf2-8043-a1e725343bdf'
     response = client.post(
-        f'/api/v1/auth/user/{test_user_id}/refresh',
+        '/api/v1/auth/user/{test_user_id}/refresh',
         json={
             'access_token': tokens.access_token,
             'refresh_token': tokens.refresh_token
-        }
+        },
+        params={'test_user_id': 'f9da64a4-c7c0-4bf2-8043-a1e725343bdf'}
     )
     assert response.json() == expected['data']
     assert response.status_code == expected['status_code']
 
 
-@pytest.mark.parametrize(
-        'new_credentials, expected',
-        parametrize.CHANGE_CREDENTIALS
-)
+@pytest.mark.parametrize('new_credentials, expected', parametrize.CHANGE_CREDENTIALS)
 async def test_change_credentials(new_credentials, expected, monkeypatch):
     monkeypatch.setattr(
         user_logic, 'change_credentials', utils.mock_change_credentials
@@ -99,6 +96,62 @@ async def test_change_credentials(new_credentials, expected, monkeypatch):
             'old_password': new_credentials.old_password,
             'new_password': new_credentials.new_password
         },
+        headers={'authorization': 'very.secure.jwt-token555'}
+    )
+    assert response.json() == expected['data']
+    assert response.status_code == expected['status_code']
+
+
+@pytest.mark.parametrize(
+    'new_role, expected',
+    parametrize.CREATE_ROLE
+)
+async def test_create_role(new_role, expected, monkeypatch):
+    monkeypatch.setattr(
+        access_logic, 'create_role', utils.mock_create_role
+    )
+    response = client.post(
+        '/api/v1/auth/access/role',
+        json={
+            'name': new_role.name,
+            'description': new_role.description
+        },
+        headers={'authorization': 'very.secure.jwt-token555'}
+    )
+    assert response.json() == expected['data']
+    assert response.status_code == expected['status_code']
+
+
+@pytest.mark.usefixtures('create_schema', 'create_tables', 'create_roles')
+async def test_view_roles(monkeypatch):
+    monkeypatch.setattr(
+        access_logic, 'view_roles', utils.mock_view_roles
+    )
+    response = client.get(
+        '/api/v1/auth/access/role',
+        headers={'authorization': 'very.secure.jwt-token555'}
+    )
+    assert response.json() == {
+        'success': [
+            {'name': 'test_editor', 'description': 'description'},
+            {'name': 'test_admin', 'description': 'description'}
+        ]
+    }
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize('changed_role, expected', parametrize.CHANGE_ROLE)
+@pytest.mark.usefixtures('create_schema', 'create_tables', 'create_roles')
+async def test_change_role(changed_role, expected, monkeypatch):
+    monkeypatch.setattr(
+        access_logic, 'change_role', utils.mock_change_role
+    )
+    response = client.put(
+        'api/v1/auth/access/role/{test_role_id}',
+        json={
+            'name': changed_role.name, 'description': changed_role.description
+        },
+        params={'test_role_id': 'e0b4ac52-1173-45dd-9a81-e3a915872385'},
         headers={'authorization': 'very.secure.jwt-token555'}
     )
     assert response.json() == expected['data']

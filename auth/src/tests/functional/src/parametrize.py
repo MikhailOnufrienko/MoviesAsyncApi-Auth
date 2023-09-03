@@ -1,4 +1,5 @@
-from auth.schemas.entity import ChangeCredentials, Token, UserLogin, UserRegistration
+from auth.schemas.entity import (AllRolesResponse, ChangeCredentials, SingleRole,
+                                 Token, UserLogin, UserRegistration)
 
 
 USER_TO_REGISTER = [
@@ -136,6 +137,47 @@ CHANGE_CREDENTIALS = [
         {
         'status_code': 409,
         'data': {'login_error': 'Указанный новый логин уже существует в системе.'}
+        }
+    )
+]
+
+CREATE_ROLE = [
+    (
+        SingleRole(name='new_test_role', description='description'),
+        {
+            'status_code': 201,
+            'data': {'success': 'Роль успешно создана.'}
+        }
+    ),
+    (
+        SingleRole(name='new_test_role_no_access', description='description'),
+        {
+            'status_code': 403,
+            'data': {'access_error': 'Отсутствуют необходимые права доступа.'}
+        }
+    ),
+]
+
+CHANGE_ROLE = [
+    (
+        SingleRole(name='name_changed', description='changed_too'),
+        {
+            'status_code': 200,
+            'data': {'success': {'name': 'name_changed', 'description': 'changed_too'}}
+        }
+    ),
+    (
+        SingleRole(name='name_changed_no_access', description='changed_too'),
+        {
+            'status_code': 403,
+            'data': {'access_error': 'Отсутствуют необходимые права доступа.'}
+        }
+    ),
+    (
+        SingleRole(name='name_changed_not_exists', description='changed_too'),
+        {
+            'status_code': 404,
+            'data': {'not_found_error': 'Роль не найдена.'}
         }
     )
 ]

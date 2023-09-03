@@ -1,12 +1,11 @@
 from typing import Annotated
 
-from fastapi import Header, Request, APIRouter
+from fastapi import Header, APIRouter
 from fastapi.responses import JSONResponse
 
 from auth.schemas.entity import AllRolesResponse, RoleName, SingleRole
 from auth.src.db.postgres import DB_SESSION_DEPEND
-from auth.src.db.redis import REDIS_DEPEND
-from auth.src.services import access_logic, token_logic, user_logic
+from auth.src.services import access_logic
 
 
 router = APIRouter()

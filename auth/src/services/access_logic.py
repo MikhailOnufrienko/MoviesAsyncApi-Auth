@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from auth.schemas.entity import SingleRole
 
-from auth.src.models.entity import Role, User, UserProfile
+from auth.src.models.entity import Role, UserProfile
 from auth.src.services import token_logic, user_logic
 
 
