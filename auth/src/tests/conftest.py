@@ -38,7 +38,7 @@ client = TestClient(app)
 
 async def override_get_postgres_session() -> AsyncSession:
     async with async_session() as session:
-        yield session 
+        yield session
 
 
 app.dependency_overrides[get_postgres_session] = override_get_postgres_session

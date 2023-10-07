@@ -26,8 +26,8 @@ class User(Base):
     login_history = relationship('LoginHistory', back_populates='user')
 
     def __init__(
-            self, login: str, hashed_password: str, first_name: str | None,
-            last_name: str | None, email = str | None
+            self, login: str, hashed_password: str, first_name: str | None = None,
+            last_name: str | None = None, email: str | None = None
         ) -> None:
         self.login = login
         self.hashed_password = hashed_password

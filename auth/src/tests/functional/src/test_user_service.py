@@ -1,18 +1,19 @@
-from fastapi.responses import JSONResponse
+from typing import Any
 import pytest
+from auth.schemas.entity import (ChangeCredentials, SingleRole,
+                                 Token, UserLogin, UserRegistration)
 
-from auth.schemas.entity import Token, UserLogin, UserRegistration
 from auth.src.tests.conftest import client
 from auth.src.services import access_logic, token_logic, user_logic
 from . import parametrize, utils
 
 
-@pytest.mark.parametrize(
-        'new_user, expected',
-        parametrize.USER_TO_REGISTER
-)
+@pytest.mark.parametrize('new_user, expected', parametrize.USER_TO_REGISTER)
 @pytest.mark.usefixtures("create_schema", "create_tables", "create_user")
-async def test_register_user(new_user, expected):
+async def test_register_user(
+    new_user: tuple[UserRegistration, dict[str, Any]],
+    expected: tuple[UserRegistration, dict[str, Any]]
+):
     response = client.post(
         '/api/v1/auth/user/register',
         json = {
@@ -26,12 +27,12 @@ async def test_register_user(new_user, expected):
     assert data == expected.get('data')
 
 
-@pytest.mark.parametrize(
-        'user, expected',
-        parametrize.USER_TO_LOGIN
-)
+@pytest.mark.parametrize('user, expected', parametrize.USER_TO_LOGIN)
 @pytest.mark.usefixtures("create_schema", "create_tables", "create_user")
-async def test_login_user(user, expected):
+async def test_login_user(
+    user: tuple[UserLogin, dict[str, Any]],
+    expected: tuple[UserLogin, dict[str, Any]]
+):
     response = client.post(
         '/api/v1/auth/user/login',
         json = {
@@ -47,12 +48,13 @@ async def test_login_user(user, expected):
         assert 'X-Refresh-Token' in response.headers
     
 
-@pytest.mark.parametrize(
-        'user_header, expected',
-        parametrize.USER_TO_LOGOUT
-)
+@pytest.mark.parametrize('user_header, expected', parametrize.USER_TO_LOGOUT)
 @pytest.mark.usefixtures("create_schema", "create_tables", "create_user")
-async def test_logout_user(user_header, expected, monkeypatch):
+async def test_logout_user(
+    user_header: tuple[dict[str, str], dict[str, Any]],
+    expected: tuple[dict[str, str], dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(user_logic, 'logout_user', utils.mock_logout_user)
     response = client.post(
         '/api/v1/auth/user/logout',
@@ -62,11 +64,12 @@ async def test_logout_user(user_header, expected, monkeypatch):
     assert response.json() == expected['data']
 
 
-@pytest.mark.parametrize(
-        'tokens, expected',
-        parametrize.REFRESH_TOKENS
-)
-async def test_refresh_tokens(tokens, expected, monkeypatch):
+@pytest.mark.parametrize('tokens, expected', parametrize.REFRESH_TOKENS)
+async def test_refresh_tokens(
+    tokens: tuple[Token, dict[str, Any]],
+    expected: tuple[Token, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         token_logic,
         'refresh_tokens',
@@ -85,7 +88,11 @@ async def test_refresh_tokens(tokens, expected, monkeypatch):
 
 
 @pytest.mark.parametrize('new_credentials, expected', parametrize.CHANGE_CREDENTIALS)
-async def test_change_credentials(new_credentials, expected, monkeypatch):
+async def test_change_credentials(
+    new_credentials: tuple[ChangeCredentials, dict[str, Any]],
+    expected: tuple[ChangeCredentials, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         user_logic, 'change_credentials', utils.mock_change_credentials
     )
@@ -102,11 +109,12 @@ async def test_change_credentials(new_credentials, expected, monkeypatch):
     assert response.status_code == expected['status_code']
 
 
-@pytest.mark.parametrize(
-    'new_role, expected',
-    parametrize.CREATE_ROLE
-)
-async def test_create_role(new_role, expected, monkeypatch):
+@pytest.mark.parametrize('new_role, expected', parametrize.CREATE_ROLE)
+async def test_create_role(
+    new_role: tuple[SingleRole, dict[str, Any]],
+    expected: tuple[SingleRole, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         access_logic, 'create_role', utils.mock_create_role
     )
@@ -123,7 +131,7 @@ async def test_create_role(new_role, expected, monkeypatch):
 
 
 @pytest.mark.usefixtures('create_schema', 'create_tables', 'create_roles')
-async def test_view_roles(monkeypatch):
+async def test_view_roles(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         access_logic, 'view_roles', utils.mock_view_roles
     )
@@ -142,7 +150,11 @@ async def test_view_roles(monkeypatch):
 
 @pytest.mark.parametrize('changed_role, expected', parametrize.CHANGE_ROLE)
 @pytest.mark.usefixtures('create_schema', 'create_tables', 'create_roles')
-async def test_change_role(changed_role, expected, monkeypatch):
+async def test_change_role(
+    changed_role: tuple[SingleRole, dict[str, Any]],
+    expected: tuple[SingleRole, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         access_logic, 'change_role', utils.mock_change_role
     )

@@ -2,6 +2,7 @@ import uvicorn
 from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
 from fastapi.exceptions import HTTPException, RequestValidationError
+
 from auth.src.core.config import app_settings
 from auth.src.db.redis import get_redis
 from auth.src.db.postgres import get_postgres_session

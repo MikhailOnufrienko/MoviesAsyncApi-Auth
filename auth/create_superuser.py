@@ -5,7 +5,6 @@ from sqlalchemy import create_engine, insert, select
 from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash
 
-from auth.schemas.entity import UserRegistration
 from auth.src.core.config import app_settings
 from src.models.entity import Role, User, UserProfile
 
